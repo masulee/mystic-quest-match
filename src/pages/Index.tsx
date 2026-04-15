@@ -3,6 +3,7 @@ import { JourneyPath } from "@/components/JourneyPath";
 import { ItemCollection } from "@/components/ItemCollection";
 import { MatchPreview } from "@/components/MatchPreview";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
@@ -32,9 +33,11 @@ const Index = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Button variant="golden" size="xl">
-              여행 시작하기
-            </Button>
+            <Link to="/explore">
+              <Button variant="golden" size="xl">
+                여행 시작하기
+              </Button>
+            </Link>
             <Button variant="ethereal" size="xl">
               인연 찾기
             </Button>
