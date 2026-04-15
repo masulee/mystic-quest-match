@@ -3,6 +3,7 @@ import { JourneyPath } from "@/components/JourneyPath";
 import { ItemCollection } from "@/components/ItemCollection";
 import { MatchPreview } from "@/components/MatchPreview";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
