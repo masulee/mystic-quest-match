@@ -123,7 +123,7 @@ export const MatchPreview = () => {
           <div className="py-4">
             <div className="mx-auto w-48 h-px bg-gradient-to-r from-transparent via-destructive/50 to-transparent" />
           </div>
-          <p className="text-foreground/70 text-sm font-display">다시 여행을 떠나 새로운 조각을 모아보세요</p>
+          <p className="text-foreground/70 text-sm font-display">다시 여행을 떠나 새로운 인연의 조각을 모아 마법사에게 가보세요</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <Link to="/explore">
               <Button variant="golden" size="lg">🌙 다시 여행 떠나기</Button>
