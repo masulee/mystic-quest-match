@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { HalfItem } from "./HalfItem";
 import { Button } from "./ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useGame } from "@/contexts/GameContext";
 
 interface MatchProfile {
   id: number;
@@ -40,10 +41,17 @@ const partnerTraits = [
 type Phase = "preview" | "sensing" | "approaching" | "resonating" | "breaking" | "failed";
 
 export const MatchPreview = () => {
+  const navigate = useNavigate();
+  const { resetGame } = useGame();
   const [phase, setPhase] = useState<Phase>("preview");
   const [hintIndex, setHintIndex] = useState(0);
   const [heartbeat, setHeartbeat] = useState(1);
   const [revealProgress, setRevealProgress] = useState(0);
+
+  const handleRestartJourney = () => {
+    resetGame();
+    navigate("/intro");
+  };
 
   const handleCheckMatch = () => {
     setPhase("sensing");
@@ -125,9 +133,9 @@ export const MatchPreview = () => {
           </div>
           <p className="text-foreground/70 text-sm font-display">다시 여행을 떠나 새로운 인연의 조각을 모아 마법사에게 가보세요</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Link to="/explore">
-              <Button variant="golden" size="lg">🌙 다시 여행 떠나기</Button>
-            </Link>
+            <Button variant="golden" size="lg" onClick={handleRestartJourney}>
+              🌙 처음부터 다시 여행 떠나기
+            </Button>
             <Button variant="ethereal" size="lg" onClick={handleRetry}>돌아가기</Button>
           </div>
         </div>
