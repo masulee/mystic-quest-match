@@ -114,10 +114,10 @@ export const MatchPreview = () => {
             <span className="text-2xl opacity-40 inline-block rotate-[45deg] translate-y-[15px]">🔮</span>
           </div>
           <div className="space-y-3">
-            <h3 className="font-display text-2xl text-foreground">조각이 맞지 않습니다...</h3>
+            <h3 className="font-display text-2xl text-foreground">나침반의 바늘이 어긋났습니다...</h3>
             <p className="text-muted-foreground text-sm max-w-sm mx-auto leading-relaxed">
-              가까이 다가갔지만, 이 인연은 당신의 반쪽이 아니었어요.<br />
-              조각이 부서져 별가루로 흩어졌습니다.
+              두 반쪽 나침반은 서로 다른 운명을 가리켰어요.<br />
+              나침반의 유리가 금이 가며 별가루로 흩어졌습니다.
             </p>
           </div>
           <div className="py-4">
