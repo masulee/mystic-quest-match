@@ -46,17 +46,21 @@ const Explore = () => {
           <PersonalityProfile />
         </div>
 
-        {/* All complete */}
+        {/* All complete - 마법사의 부름 */}
         {collectedItems.length >= 5 && (
           <div className="text-center space-y-6 py-8 animate-in fade-in duration-700">
-            <div className="text-5xl">🌈✨💫</div>
-            <h2 className="font-display text-2xl text-gradient-gold">모든 여정을 완료했습니다!</h2>
+            <div className="text-5xl animate-pulse-glow">🌬️✨</div>
+            <h2 className="font-display text-2xl text-gradient-gold">
+              바람결에 마법사의 부름이 들려옵니다…
+            </h2>
             <p className="text-muted-foreground max-w-md mx-auto">
-              당신만의 반쪽 아이템들이 모였습니다. 이제 나머지 반쪽을 가진 인연을 찾을 준비가 되었어요.
+              인연의 조각 5개가 모두 모였습니다.
+              <br />
+              잊혀진 편지를 되살릴 시간입니다.
             </p>
-            <Link to="/">
-              <Button variant="golden" size="xl">
-                🌙 인연 찾으러 가기
+            <Link to="/finale">
+              <Button variant="golden" size="xl" className="animate-pulse-glow">
+                🔮 마법사에게 가기
               </Button>
             </Link>
           </div>
