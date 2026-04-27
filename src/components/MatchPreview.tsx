@@ -244,7 +244,7 @@ export const MatchPreview = () => {
           {/* Progress bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>조각 공명도</span>
+              <span>나침반 공명도</span>
               <span className="text-gold">{revealProgress}%</span>
             </div>
             <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
