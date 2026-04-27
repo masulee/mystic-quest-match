@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { HalfItem } from "./HalfItem";
 import { Button } from "./ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useGame } from "@/contexts/GameContext";
 
 interface MatchProfile {
   id: number;
