@@ -1,13 +1,23 @@
+import { useEffect } from "react";
 import { StarField } from "@/components/StarField";
 import { ExplorationMap } from "@/components/ExplorationMap";
 import { ExplorationQuiz } from "@/components/ExplorationQuiz";
 import { PersonalityProfile } from "@/components/PersonalityProfile";
 import { Button } from "@/components/ui/button";
 import { useGame } from "@/contexts/GameContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Explore = () => {
-  const { collectedItems, resetGame } = useGame();
+  const { collectedItems, resetGame, showReward } = useGame();
+  const navigate = useNavigate();
+
+  // 5개 아이템 수집 + 마지막 보상 화면을 본 직후 자동으로 피날레로 이동
+  useEffect(() => {
+    if (collectedItems.length >= 5 && showReward) {
+      const t = setTimeout(() => navigate("/finale"), 3500);
+      return () => clearTimeout(t);
+    }
+  }, [collectedItems.length, showReward, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-night relative overflow-hidden">
