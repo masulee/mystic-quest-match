@@ -18,17 +18,17 @@ const potentialMatches: MatchProfile[] = [
   {
     id: 1,
     silhouette: true,
-    matchedItem: { name: "별의 조각", icon: "⭐", rarity: "rare" },
+    matchedItem: { name: "반쪽 나침반", icon: "🧭", rarity: "legendary" },
     compatibility: 87,
   },
 ];
 
 const mysteryHints = [
-  "누군가의 심장이 같은 리듬으로 뛰고 있습니다...",
-  "별빛 아래, 같은 꿈을 꾸는 사람이 있어요...",
-  "조각이 서로를 감지하고 있습니다...",
-  "운명의 실이 조여오고 있습니다...",
-  "반쪽의 온기가 느껴집니다...",
+  "전당포 주인이 건넨 나침반의 바늘이 천천히 떨리기 시작합니다...",
+  "어딘가에서 또 다른 반쪽 나침반이 같은 방향을 가리키고 있어요...",
+  "두 나침반의 자기장이 서로를 감지하고 있습니다...",
+  "바늘이 한 방향으로 강하게 끌리고 있습니다...",
+  "반쪽 나침반의 온기가 손끝으로 전해집니다...",
 ];
 
 const partnerTraits = [
