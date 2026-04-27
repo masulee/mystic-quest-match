@@ -172,24 +172,24 @@ export const MatchPreview = () => {
       <div className="relative overflow-hidden rounded-2xl border border-gold/50 bg-gradient-to-br from-card to-deep-purple/30 p-8">
         <div className="absolute inset-0 animate-pulse-glow bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.2),transparent_60%)]" />
         <div className="relative text-center space-y-6">
-          <p className="text-xs text-gold/70 font-display tracking-widest uppercase animate-in fade-in duration-500">운명의 순간</p>
+          <p className="text-xs text-gold/70 font-display tracking-widest uppercase animate-in fade-in duration-500">나침반이 가리키는 순간</p>
           <div className="relative h-36 flex items-center justify-center">
             <div className="animate-slide-in-left">
-              <HalfItem name="별의 조각" icon="⭐" rarity="rare" isLeft={true} />
+              <HalfItem name="반쪽 나침반" icon="🧭" rarity="legendary" isLeft={true} />
             </div>
             <div className="mx-2 flex flex-col items-center gap-1">
-              <span className="text-2xl animate-heartbeat-fast">💓</span>
+              <span className="text-2xl animate-heartbeat-fast">🧲</span>
               <div className="w-8 h-0.5 bg-gradient-to-r from-gold to-mystic-purple animate-pulse" />
             </div>
             <div className="animate-slide-in-right">
               <div className="relative">
-                <HalfItem name="???" icon="❓" rarity="rare" isLeft={false} className="opacity-70" />
+                <HalfItem name="???" icon="❓" rarity="legendary" isLeft={false} className="opacity-70" />
                 <div className="absolute inset-0 backdrop-blur-[2px] rounded-xl animate-pulse" />
               </div>
             </div>
           </div>
-          <p className="font-display text-lg text-gold animate-pulse">조각을 맞추는 중...</p>
-          <p className="text-muted-foreground text-xs">두 조각이 서로에게 끌리고 있습니다</p>
+          <p className="font-display text-lg text-gold animate-pulse">두 나침반을 맞추는 중...</p>
+          <p className="text-muted-foreground text-xs">바늘이 서로 같은 방향을 찾고 있습니다</p>
         </div>
       </div>
     );
