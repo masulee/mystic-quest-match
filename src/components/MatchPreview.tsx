@@ -311,7 +311,7 @@ export const MatchPreview = () => {
             <span className="text-xl text-gold/60">💫</span>
           </div>
 
-          <p className="text-xs text-muted-foreground/60">조각의 공명을 탐지하고 있습니다...</p>
+          <p className="text-xs text-muted-foreground/60">두 반쪽 나침반의 공명을 탐지하고 있습니다...</p>
         </div>
       </div>
     );
