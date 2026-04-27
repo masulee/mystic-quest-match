@@ -41,10 +41,17 @@ const partnerTraits = [
 type Phase = "preview" | "sensing" | "approaching" | "resonating" | "breaking" | "failed";
 
 export const MatchPreview = () => {
+  const navigate = useNavigate();
+  const { resetGame } = useGame();
   const [phase, setPhase] = useState<Phase>("preview");
   const [hintIndex, setHintIndex] = useState(0);
   const [heartbeat, setHeartbeat] = useState(1);
   const [revealProgress, setRevealProgress] = useState(0);
+
+  const handleRestartJourney = () => {
+    resetGame();
+    navigate("/intro");
+  };
 
   const handleCheckMatch = () => {
     setPhase("sensing");
