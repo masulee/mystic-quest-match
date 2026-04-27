@@ -205,9 +205,9 @@ export const MatchPreview = () => {
             <span
               className="text-4xl inline-block"
               style={{ animation: `heartbeat ${1.2 / heartbeat}s ease-in-out infinite` }}
-            >💓</span>
+            >🧭</span>
           </div>
-          <p className="text-center font-display text-gold text-sm tracking-wider">상대의 조각에 다가가는 중...</p>
+          <p className="text-center font-display text-gold text-sm tracking-wider">상대의 반쪽 나침반에 다가가는 중...</p>
 
           {/* Mystery profile reveal */}
           <div className="bg-background/30 rounded-xl border border-border/30 p-5 space-y-4">
