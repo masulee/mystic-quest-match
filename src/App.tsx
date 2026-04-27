@@ -7,6 +7,7 @@ import { GameProvider } from "@/contexts/GameContext";
 import Index from "./pages/Index";
 import Intro from "./pages/Intro";
 import Explore from "./pages/Explore";
+import Finale from "./pages/Finale";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/intro" element={<Intro />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/finale" element={<Finale />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
