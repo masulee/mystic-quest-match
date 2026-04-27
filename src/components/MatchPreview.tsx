@@ -143,14 +143,14 @@ export const MatchPreview = () => {
         <div className="relative text-center space-y-6">
           <div className="relative h-32 flex items-center justify-center">
             <div className="animate-crack-left">
-              <HalfItem name="별의 조각" icon="⭐" rarity="rare" isLeft={true} />
+              <HalfItem name="반쪽 나침반" icon="🧭" rarity="legendary" isLeft={true} />
             </div>
             <div className="mx-4 text-3xl animate-pulse text-destructive">💥</div>
             <div className="animate-crack-right">
-              <HalfItem name="???" icon="❓" rarity="rare" isLeft={false} className="opacity-50" />
+              <HalfItem name="???" icon="❓" rarity="legendary" isLeft={false} className="opacity-50" />
             </div>
           </div>
-          <p className="font-display text-lg text-destructive/80 animate-pulse">조각이 서로를 거부하고 있습니다...</p>
+          <p className="font-display text-lg text-destructive/80 animate-pulse">두 나침반의 바늘이 서로를 거부합니다...</p>
           {/* Shard particles */}
           <div className="flex justify-center gap-2">
             {[...Array(5)].map((_, i) => (
