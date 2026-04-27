@@ -324,11 +324,15 @@ export const MatchPreview = () => {
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-mystic-purple/20 rounded-full blur-2xl" />
       
       <div className="relative">
-        <div className="flex items-center gap-2 mb-6">
-          <span className="text-2xl">✨</span>
-          <h3 className="font-display text-xl text-foreground">운명의 인연</h3>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-2xl">🧭</span>
+          <h3 className="font-display text-xl text-foreground">발견된 인연</h3>
         </div>
-        
+        <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
+          전당포 주인이 건넨 <span className="text-gold">반쪽 나침반</span>이 어딘가의 또 다른 반쪽을 가리키고 있습니다.
+          두 나침반을 맞대어 같은 운명을 가리키는지 확인해보세요.
+        </p>
+
         {potentialMatches.length > 0 ? (
           <div className="space-y-6">
             {potentialMatches.map((match) => (
@@ -337,7 +341,7 @@ export const MatchPreview = () => {
                 <div className="flex-1 flex items-center justify-center">
                   <div className="relative">
                     <div className="w-16 h-0.5 bg-gradient-to-r from-gold to-mystic-purple" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl animate-pulse">💫</div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl animate-pulse">🧲</div>
                   </div>
                 </div>
                 <div className="relative">
@@ -346,20 +350,20 @@ export const MatchPreview = () => {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-display text-gold">{match.compatibility}%</div>
-                  <div className="text-xs text-muted-foreground">운명 호환</div>
+                  <div className="text-xs text-muted-foreground">바늘 일치도</div>
                 </div>
               </div>
             ))}
             <Button variant="golden" className="w-full" onClick={handleCheckMatch}>
-              인연 확인하기
+              나침반 맞춰보기
             </Button>
           </div>
         ) : (
           <div className="text-center py-8">
-            <div className="text-4xl mb-4">🔮</div>
+            <div className="text-4xl mb-4">🧭</div>
             <p className="text-muted-foreground">
-              아직 매칭된 인연이 없습니다.<br />
-              여행을 계속하며 반쪽 아이템을 모아보세요!
+              아직 반쪽 나침반을 받지 못했습니다.<br />
+              여행을 마치고 마법사와 전당포 주인을 만나보세요!
             </p>
           </div>
         )}
