@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { PersonalityTrait, gameLocations } from "@/lib/gameData";
 
 export interface CollectedItem {
@@ -8,6 +8,17 @@ export interface CollectedItem {
   rarity: "common" | "rare" | "legendary";
   trait: PersonalityTrait;
   description: string;
+}
+
+export interface MatchedPartner {
+  id: string;
+  name: string;
+  avatar: string;
+  trait: PersonalityTrait;
+  percentage: number;
+  matchedAt: string;
+  lastMessage?: string;
+  temperature: number;
 }
 
 interface GameState {
@@ -21,6 +32,7 @@ interface GameState {
   showReward: boolean;
   showResponse: string | null;
   locationCompleted: boolean;
+  matchedPartners: MatchedPartner[];
 }
 
 interface GameContextType extends GameState {
@@ -31,7 +43,12 @@ interface GameContextType extends GameState {
   selectLocation: (id: number) => void;
   getDominantTrait: () => PersonalityTrait;
   resetGame: () => void;
+  addMatchedPartner: (partner: MatchedPartner) => void;
+  updatePartnerTemperature: (id: string, delta: number) => void;
+  updatePartnerLastMessage: (id: string, message: string) => void;
 }
+
+const PARTNERS_KEY = "matched_partners";
 
 const GameContext = createContext<GameContextType | null>(null);
 
@@ -39,6 +56,19 @@ export const useGame = () => {
   const ctx = useContext(GameContext);
   if (!ctx) throw new Error("useGame must be used within GameProvider");
   return ctx;
+};
+
+const loadPartners = (): MatchedPartner[] => {
+  try {
+    const raw = localStorage.getItem(PARTNERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const persistPartners = (partners: MatchedPartner[]) => {
+  localStorage.setItem(PARTNERS_KEY, JSON.stringify(partners));
 };
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -53,7 +83,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     showReward: false,
     showResponse: null,
     locationCompleted: false,
+    matchedPartners: [],
   });
+
+  // hydrate partners from localStorage
+  useEffect(() => {
+    const partners = loadPartners();
+    if (partners.length > 0) {
+      setState((s) => ({ ...s, matchedPartners: partners }));
+    }
+  }, []);
 
   const startQuiz = useCallback(() => {
     setState((s) => ({ ...s, isQuizActive: true, currentQuizIndex: 0, quizAnswers: [], showResponse: null, locationCompleted: false, showReward: false }));
@@ -72,7 +111,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setState((s) => {
       const location = gameLocations.find((l) => l.id === s.currentLocationId);
       if (!location) return s;
-
       const nextIndex = s.currentQuizIndex + 1;
       if (nextIndex >= location.quizzes.length) {
         return { ...s, showResponse: null, locationCompleted: true, isQuizActive: false };
@@ -93,16 +131,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setState((s) => {
       const location = gameLocations.find((l) => l.id === s.currentLocationId);
       if (!location) return s;
-
-      const dominant = (() => {
-        const counts: Record<string, number> = {};
-        s.quizAnswers.forEach((t) => { counts[t] = (counts[t] || 0) + 1; });
-        return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as PersonalityTrait;
-      })();
-
+      const counts: Record<string, number> = {};
+      s.quizAnswers.forEach((t) => { counts[t] = (counts[t] || 0) + 1; });
+      const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as PersonalityTrait;
       const reward = location.rewards.find((r) => r.trait === dominant);
       if (!reward) return s;
-
       const newItem: CollectedItem = {
         locationId: location.id,
         itemName: reward.itemName,
@@ -111,10 +144,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         trait: reward.trait,
         description: reward.description,
       };
-
       const nextLocationId = s.currentLocationId + 1;
       const newUnlocked = nextLocationId <= 5 ? [...s.unlockedLocations, nextLocationId] : s.unlockedLocations;
-
       return {
         ...s,
         collectedItems: [...s.collectedItems, newItem],
@@ -133,7 +164,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const resetGame = useCallback(() => {
-    setState({
+    setState((s) => ({
       currentLocationId: 1,
       currentQuizIndex: 0,
       unlockedLocations: [1],
@@ -144,11 +175,57 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       showReward: false,
       showResponse: null,
       locationCompleted: false,
+      matchedPartners: s.matchedPartners, // keep existing matches
+    }));
+    // also reset retry count
+    try { localStorage.removeItem("match_retry_count"); } catch {}
+  }, []);
+
+  const addMatchedPartner = useCallback((partner: MatchedPartner) => {
+    setState((s) => {
+      if (s.matchedPartners.some((p) => p.id === partner.id)) return s;
+      const next = [...s.matchedPartners, partner];
+      persistPartners(next);
+      return { ...s, matchedPartners: next };
+    });
+  }, []);
+
+  const updatePartnerTemperature = useCallback((id: string, delta: number) => {
+    setState((s) => {
+      const next = s.matchedPartners.map((p) =>
+        p.id === id ? { ...p, temperature: Math.max(0, Math.min(100, p.temperature + delta)) } : p
+      );
+      persistPartners(next);
+      return { ...s, matchedPartners: next };
+    });
+  }, []);
+
+  const updatePartnerLastMessage = useCallback((id: string, message: string) => {
+    setState((s) => {
+      const next = s.matchedPartners.map((p) =>
+        p.id === id ? { ...p, lastMessage: message } : p
+      );
+      persistPartners(next);
+      return { ...s, matchedPartners: next };
     });
   }, []);
 
   return (
-    <GameContext.Provider value={{ ...state, startQuiz, answerQuiz, proceedAfterResponse, claimReward, selectLocation, getDominantTrait, resetGame }}>
+    <GameContext.Provider
+      value={{
+        ...state,
+        startQuiz,
+        answerQuiz,
+        proceedAfterResponse,
+        claimReward,
+        selectLocation,
+        getDominantTrait,
+        resetGame,
+        addMatchedPartner,
+        updatePartnerTemperature,
+        updatePartnerLastMessage,
+      }}
+    >
       {children}
     </GameContext.Provider>
   );
