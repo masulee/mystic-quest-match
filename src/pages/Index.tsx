@@ -2,6 +2,7 @@ import { StarField } from "@/components/StarField";
 import { JourneyPath } from "@/components/JourneyPath";
 import { ItemCollection } from "@/components/ItemCollection";
 import { MatchPreview } from "@/components/MatchPreview";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -9,6 +10,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-night relative overflow-hidden">
       <StarField />
+      <Header />
       
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-20">
