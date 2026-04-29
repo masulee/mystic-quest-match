@@ -2,11 +2,6 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
 import { StarField } from "@/components/StarField";
 import { useAuth, AuthProvider as Provider, calcAge } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -23,11 +18,32 @@ const Login = () => {
 
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [gender, setGender] = useState<"male" | "female" | "other" | "">(user?.gender ?? "");
-  const [birthdate, setBirthdate] = useState<Date | undefined>(
-    user?.birthdate ? new Date(user.birthdate) : undefined
+  const [birthInput, setBirthInput] = useState<string>(
+    user?.birthdate ? user.birthdate.replace(/-/g, "") : ""
   );
 
   const from = (location.state as any)?.from?.pathname ?? "/";
+
+  // Convert YYYYMMDD digits → YYYY-MM-DD; returns null if invalid
+  const parseBirth = (digits: string): string | null => {
+    if (!/^\d{8}$/.test(digits)) return null;
+    const y = Number(digits.slice(0, 4));
+    const m = Number(digits.slice(4, 6));
+    const d = Number(digits.slice(6, 8));
+    const nowY = new Date().getFullYear();
+    if (y < 1900 || y > nowY) return null;
+    if (m < 1 || m > 12) return null;
+    if (d < 1 || d > 31) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    if (dt > new Date()) return null;
+    return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+  };
+
+  const previewAge = (() => {
+    const iso = parseBirth(birthInput);
+    return iso ? calcAge(iso) : undefined;
+  })();
 
   const handleSnsLogin = async (provider: Provider) => {
     setLoadingProvider(provider);
@@ -51,15 +67,16 @@ const Login = () => {
       toast.error("성별을 선택해주세요");
       return;
     }
-    const n = calcAge(birthdate ? format(birthdate, "yyyy-MM-dd") : undefined);
-    if (!birthdate || n === undefined || n < 1 || n > 150) {
-      toast.error("올바른 생년월일을 선택해주세요");
+    const iso = parseBirth(birthInput);
+    const n = iso ? calcAge(iso) : undefined;
+    if (!iso || n === undefined || n < 1 || n > 150) {
+      toast.error("올바른 생년월일 8자리를 입력해주세요 (YYYYMMDD)");
       return;
     }
     updateProfile({
       nickname: trimmed,
       gender: gender as "male" | "female" | "other",
-      birthdate: format(birthdate, "yyyy-MM-dd"),
+      birthdate: iso,
     });
     toast.success(`환영합니다, ${trimmed}님 ✨`);
     navigate(from, { replace: true });
@@ -168,43 +185,25 @@ const Login = () => {
 
               <div className="space-y-2">
                 <label className="text-sm text-foreground/80">생년월일</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal h-10",
-                        !birthdate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {birthdate ? (
-                        <>
-                          {format(birthdate, "yyyy년 M월 d일", { locale: ko })}
-                          <span className="ml-auto text-xs text-gold">
-                            만 {calcAge(format(birthdate, "yyyy-MM-dd"))}세
-                          </span>
-                        </>
-                      ) : (
-                        <span>생년월일을 선택하세요</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={birthdate}
-                      onSelect={setBirthdate}
-                      captionLayout="dropdown-buttons"
-                      fromYear={1900}
-                      toYear={new Date().getFullYear()}
-                      defaultMonth={birthdate ?? new Date(2000, 0)}
-                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d*"
+                  maxLength={8}
+                  placeholder="YYYYMMDD (예: 19900315)"
+                  value={birthInput}
+                  onChange={(e) => {
+                    const onlyDigits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                    setBirthInput(onlyDigits);
+                  }}
+                  className="tracking-widest"
+                />
+                <p className="text-[10px] text-muted-foreground flex justify-between">
+                  <span>숫자 8자리로 입력해주세요</span>
+                  {previewAge !== undefined && (
+                    <span className="text-gold">만 {previewAge}세</span>
+                  )}
+                </p>
               </div>
 
               <Button variant="golden" size="lg" className="w-full" onClick={handleSubmitProfile}>
