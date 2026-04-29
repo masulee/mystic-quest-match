@@ -190,6 +190,82 @@ const MyPage = () => {
           </section>
         )}
 
+        {/* 2.5) Match attempts history */}
+        {matchAttempts.length > 0 && (
+          <section className="bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 p-6 md:p-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-xl text-foreground">매칭 시도 이력</h3>
+              <span className="text-xs text-muted-foreground">
+                총 {matchAttempts.length}회 ·{" "}
+                <span className="text-gold">
+                  성공 {matchAttempts.filter((a) => a.result === "success").length}
+                </span>{" "}
+                ·{" "}
+                <span className="text-destructive/80">
+                  실패 {matchAttempts.filter((a) => a.result === "failed").length}
+                </span>
+              </span>
+            </div>
+            <ul className="space-y-2">
+              {matchAttempts.map((a) => {
+                const success = a.result === "success";
+                return (
+                  <li
+                    key={a.id}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border",
+                      success
+                        ? "border-gold/40 bg-gold/5"
+                        : "border-destructive/30 bg-destructive/5"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center text-xl border",
+                        success
+                          ? "border-gold/40 bg-gradient-to-br from-mystic-purple/30 to-gold/20"
+                          : "border-destructive/30 bg-destructive/10"
+                      )}
+                    >
+                      {success ? a.partnerAvatar ?? "💫" : "💔"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground truncate">
+                        {success ? (
+                          <>
+                            <span className="text-gold">매칭 성공</span> ·{" "}
+                            {a.partnerName ?? "운명의 인연"}
+                          </>
+                        ) : (
+                          <span className="text-destructive/90">매칭 실패</span>
+                        )}
+                        {a.partnerTrait && (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            · {traitEmoji[a.partnerTrait]} {a.partnerTrait}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70">
+                        {new Date(a.attemptedAt).toLocaleString("ko-KR")}
+                      </p>
+                    </div>
+                    {a.percentage !== undefined && (
+                      <span
+                        className={cn(
+                          "text-xs font-display",
+                          success ? "text-gold" : "text-muted-foreground"
+                        )}
+                      >
+                        {a.percentage}%
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
         {/* 3) Journey progress */}
         <section className="bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 p-6 md:p-8">
           <div className="flex items-center justify-between mb-4">
