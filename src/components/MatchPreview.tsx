@@ -194,31 +194,7 @@ export const MatchPreview = () => {
     );
   }
 
-  // ── Breaking ──
-  if (phase === "breaking") {
-    return (
-      <div className="relative overflow-hidden rounded-2xl border border-destructive/40 bg-gradient-to-br from-card to-destructive/10 p-8">
-        <div className="absolute inset-0 animate-pulse bg-[radial-gradient(circle_at_50%_50%,hsl(var(--destructive)/0.15),transparent_60%)]" />
-        <div className="relative text-center space-y-6">
-          <div className="relative h-36 flex items-center justify-center gap-4">
-            <div className="animate-crack-left">
-              <HalfItem name="반쪽 나침반" icon="🧭" rarity="legendary" />
-            </div>
-            <div className="text-3xl animate-pulse text-destructive">💥</div>
-            <div className="animate-crack-right">
-              <HalfItem name="???" icon="❓" rarity="legendary" className="opacity-50" />
-            </div>
-          </div>
-          <p className="font-display text-lg text-destructive/80 animate-pulse">두 나침반의 바늘이 서로를 거부합니다...</p>
-          <div className="flex justify-center gap-2">
-            {[...Array(5)].map((_, i) => (
-              <span key={i} className="inline-block text-xs opacity-0 animate-shard" style={{ animationDelay: `${i * 0.2}s` }}>✦</span>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ── (Breaking phase removed — success/failure share the same animation flow) ──
 
   // ── Resonating ──
   if (phase === "resonating") {
