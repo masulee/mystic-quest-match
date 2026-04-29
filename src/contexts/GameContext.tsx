@@ -84,6 +84,19 @@ const persistPartners = (partners: MatchedPartner[]) => {
   localStorage.setItem(PARTNERS_KEY, JSON.stringify(partners));
 };
 
+const loadAttempts = (): MatchAttempt[] => {
+  try {
+    const raw = localStorage.getItem(ATTEMPTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const persistAttempts = (attempts: MatchAttempt[]) => {
+  localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attempts));
+};
+
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<GameState>({
     currentLocationId: 1,
