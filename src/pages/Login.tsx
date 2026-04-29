@@ -18,11 +18,32 @@ const Login = () => {
 
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [gender, setGender] = useState<"male" | "female" | "other" | "">(user?.gender ?? "");
-  const [birthdate, setBirthdate] = useState<Date | undefined>(
-    user?.birthdate ? new Date(user.birthdate) : undefined
+  const [birthInput, setBirthInput] = useState<string>(
+    user?.birthdate ? user.birthdate.replace(/-/g, "") : ""
   );
 
   const from = (location.state as any)?.from?.pathname ?? "/";
+
+  // Convert YYYYMMDD digits → YYYY-MM-DD; returns null if invalid
+  const parseBirth = (digits: string): string | null => {
+    if (!/^\d{8}$/.test(digits)) return null;
+    const y = Number(digits.slice(0, 4));
+    const m = Number(digits.slice(4, 6));
+    const d = Number(digits.slice(6, 8));
+    const nowY = new Date().getFullYear();
+    if (y < 1900 || y > nowY) return null;
+    if (m < 1 || m > 12) return null;
+    if (d < 1 || d > 31) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    if (dt > new Date()) return null;
+    return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+  };
+
+  const previewAge = (() => {
+    const iso = parseBirth(birthInput);
+    return iso ? calcAge(iso) : undefined;
+  })();
 
   const handleSnsLogin = async (provider: Provider) => {
     setLoadingProvider(provider);
@@ -46,15 +67,16 @@ const Login = () => {
       toast.error("성별을 선택해주세요");
       return;
     }
-    const n = calcAge(birthdate ? format(birthdate, "yyyy-MM-dd") : undefined);
-    if (!birthdate || n === undefined || n < 1 || n > 150) {
-      toast.error("올바른 생년월일을 선택해주세요");
+    const iso = parseBirth(birthInput);
+    const n = iso ? calcAge(iso) : undefined;
+    if (!iso || n === undefined || n < 1 || n > 150) {
+      toast.error("올바른 생년월일 8자리를 입력해주세요 (YYYYMMDD)");
       return;
     }
     updateProfile({
       nickname: trimmed,
       gender: gender as "male" | "female" | "other",
-      birthdate: format(birthdate, "yyyy-MM-dd"),
+      birthdate: iso,
     });
     toast.success(`환영합니다, ${trimmed}님 ✨`);
     navigate(from, { replace: true });
