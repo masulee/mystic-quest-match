@@ -3,6 +3,8 @@ import { HalfItem } from "./HalfItem";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import { useGame } from "@/contexts/GameContext";
+import { getPartnerForTrait } from "@/lib/mockPartners";
+import { PersonalityTrait } from "@/lib/gameData";
 
 interface MatchProfile {
   id: number;
@@ -28,13 +30,13 @@ const partnerTraits = [
   { label: "획득 아이템", value: "■■■■", icon: "🔒" },
 ];
 
-type Phase = "preview" | "sensing" | "approaching" | "resonating" | "breaking" | "failed" | "success";
+type Phase = "preview" | "sensing" | "approaching" | "resonating" | "failed" | "success";
 
 const RETRY_KEY = "match_retry_count";
 
 export const MatchPreview = () => {
   const navigate = useNavigate();
-  const { resetGame } = useGame();
+  const { resetGame, addMatchAttempt, traitScores } = useGame();
   const [phase, setPhase] = useState<Phase>("preview");
   const [hintIndex, setHintIndex] = useState(0);
   const [heartbeat, setHeartbeat] = useState(1);
