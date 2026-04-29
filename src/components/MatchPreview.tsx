@@ -116,20 +116,28 @@ export const MatchPreview = () => {
     if (phase === "resonating") {
       const t = setTimeout(() => {
         const tries = getRetryCount();
-        // First attempt (retry count 0) → fail. Retry+ → success
-        if (tries >= 1) setPhase("success");
-        else setPhase("breaking");
+        // First attempt → fail. Retry+ → success. Same animation flow either way.
+        const isSuccess = tries >= 1;
+
+        // Pick partner based on dominant trait for the attempt log
+        const entries = Object.entries(traitScores) as [PersonalityTrait, number][];
+        const sorted = entries.sort((a, b) => b[1] - a[1]);
+        const dominant: PersonalityTrait = sorted[0]?.[1] > 0 ? sorted[0][0] : "신비";
+        const partner = getPartnerForTrait(dominant);
+
+        addMatchAttempt({
+          result: isSuccess ? "success" : "failed",
+          partnerName: partner.name,
+          partnerAvatar: partner.avatar,
+          partnerTrait: partner.trait,
+          percentage: partner.percentage,
+        });
+
+        setPhase(isSuccess ? "success" : "failed");
       }, 3000);
       return () => clearTimeout(t);
     }
-  }, [phase]);
-
-  useEffect(() => {
-    if (phase === "breaking") {
-      const t = setTimeout(() => setPhase("failed"), 2000);
-      return () => clearTimeout(t);
-    }
-  }, [phase]);
+  }, [phase, traitScores, addMatchAttempt]);
 
   // ── Success ──
   if (phase === "success") {
