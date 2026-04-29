@@ -21,6 +21,16 @@ export interface MatchedPartner {
   temperature: number;
 }
 
+export interface MatchAttempt {
+  id: string;
+  attemptedAt: string;
+  result: "success" | "failed";
+  partnerName?: string;
+  partnerAvatar?: string;
+  partnerTrait?: PersonalityTrait;
+  percentage?: number;
+}
+
 interface GameState {
   currentLocationId: number;
   currentQuizIndex: number;
