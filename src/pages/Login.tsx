@@ -167,15 +167,44 @@ const Login = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm text-foreground/80">나이</label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={150}
-                  placeholder="나이를 입력하세요"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                />
+                <label className="text-sm text-foreground/80">생년월일</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-10",
+                        !birthdate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {birthdate ? (
+                        <>
+                          {format(birthdate, "yyyy년 M월 d일", { locale: ko })}
+                          <span className="ml-auto text-xs text-gold">
+                            만 {calcAge(format(birthdate, "yyyy-MM-dd"))}세
+                          </span>
+                        </>
+                      ) : (
+                        <span>생년월일을 선택하세요</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={birthdate}
+                      onSelect={setBirthdate}
+                      captionLayout="dropdown-buttons"
+                      fromYear={1900}
+                      toYear={new Date().getFullYear()}
+                      defaultMonth={birthdate ?? new Date(2000, 0)}
+                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <Button variant="golden" size="lg" className="w-full" onClick={handleSubmitProfile}>
