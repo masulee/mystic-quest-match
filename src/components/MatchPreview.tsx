@@ -3,6 +3,8 @@ import { HalfItem } from "./HalfItem";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import { useGame } from "@/contexts/GameContext";
+import { getPartnerForTrait } from "@/lib/mockPartners";
+import { PersonalityTrait } from "@/lib/gameData";
 
 interface MatchProfile {
   id: number;
@@ -28,13 +30,13 @@ const partnerTraits = [
   { label: "획득 아이템", value: "■■■■", icon: "🔒" },
 ];
 
-type Phase = "preview" | "sensing" | "approaching" | "resonating" | "breaking" | "failed" | "success";
+type Phase = "preview" | "sensing" | "approaching" | "resonating" | "failed" | "success";
 
 const RETRY_KEY = "match_retry_count";
 
 export const MatchPreview = () => {
   const navigate = useNavigate();
-  const { resetGame } = useGame();
+  const { resetGame, addMatchAttempt, traitScores } = useGame();
   const [phase, setPhase] = useState<Phase>("preview");
   const [hintIndex, setHintIndex] = useState(0);
   const [heartbeat, setHeartbeat] = useState(1);
@@ -114,20 +116,28 @@ export const MatchPreview = () => {
     if (phase === "resonating") {
       const t = setTimeout(() => {
         const tries = getRetryCount();
-        // First attempt (retry count 0) → fail. Retry+ → success
-        if (tries >= 1) setPhase("success");
-        else setPhase("breaking");
+        // First attempt → fail. Retry+ → success. Same animation flow either way.
+        const isSuccess = tries >= 1;
+
+        // Pick partner based on dominant trait for the attempt log
+        const entries = Object.entries(traitScores) as [PersonalityTrait, number][];
+        const sorted = entries.sort((a, b) => b[1] - a[1]);
+        const dominant: PersonalityTrait = sorted[0]?.[1] > 0 ? sorted[0][0] : "신비";
+        const partner = getPartnerForTrait(dominant);
+
+        addMatchAttempt({
+          result: isSuccess ? "success" : "failed",
+          partnerName: partner.name,
+          partnerAvatar: partner.avatar,
+          partnerTrait: partner.trait,
+          percentage: partner.percentage,
+        });
+
+        setPhase(isSuccess ? "success" : "failed");
       }, 3000);
       return () => clearTimeout(t);
     }
-  }, [phase]);
-
-  useEffect(() => {
-    if (phase === "breaking") {
-      const t = setTimeout(() => setPhase("failed"), 2000);
-      return () => clearTimeout(t);
-    }
-  }, [phase]);
+  }, [phase, traitScores, addMatchAttempt]);
 
   // ── Success ──
   if (phase === "success") {
@@ -184,31 +194,7 @@ export const MatchPreview = () => {
     );
   }
 
-  // ── Breaking ──
-  if (phase === "breaking") {
-    return (
-      <div className="relative overflow-hidden rounded-2xl border border-destructive/40 bg-gradient-to-br from-card to-destructive/10 p-8">
-        <div className="absolute inset-0 animate-pulse bg-[radial-gradient(circle_at_50%_50%,hsl(var(--destructive)/0.15),transparent_60%)]" />
-        <div className="relative text-center space-y-6">
-          <div className="relative h-36 flex items-center justify-center gap-4">
-            <div className="animate-crack-left">
-              <HalfItem name="반쪽 나침반" icon="🧭" rarity="legendary" />
-            </div>
-            <div className="text-3xl animate-pulse text-destructive">💥</div>
-            <div className="animate-crack-right">
-              <HalfItem name="???" icon="❓" rarity="legendary" className="opacity-50" />
-            </div>
-          </div>
-          <p className="font-display text-lg text-destructive/80 animate-pulse">두 나침반의 바늘이 서로를 거부합니다...</p>
-          <div className="flex justify-center gap-2">
-            {[...Array(5)].map((_, i) => (
-              <span key={i} className="inline-block text-xs opacity-0 animate-shard" style={{ animationDelay: `${i * 0.2}s` }}>✦</span>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // ── (Breaking phase removed — success/failure share the same animation flow) ──
 
   // ── Resonating ──
   if (phase === "resonating") {

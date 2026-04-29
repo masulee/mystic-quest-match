@@ -21,6 +21,16 @@ export interface MatchedPartner {
   temperature: number;
 }
 
+export interface MatchAttempt {
+  id: string;
+  attemptedAt: string;
+  result: "success" | "failed";
+  partnerName?: string;
+  partnerAvatar?: string;
+  partnerTrait?: PersonalityTrait;
+  percentage?: number;
+}
+
 interface GameState {
   currentLocationId: number;
   currentQuizIndex: number;
@@ -33,6 +43,7 @@ interface GameState {
   showResponse: string | null;
   locationCompleted: boolean;
   matchedPartners: MatchedPartner[];
+  matchAttempts: MatchAttempt[];
 }
 
 interface GameContextType extends GameState {
@@ -46,9 +57,11 @@ interface GameContextType extends GameState {
   addMatchedPartner: (partner: MatchedPartner) => void;
   updatePartnerTemperature: (id: string, delta: number) => void;
   updatePartnerLastMessage: (id: string, message: string) => void;
+  addMatchAttempt: (attempt: Omit<MatchAttempt, "id" | "attemptedAt">) => void;
 }
 
 const PARTNERS_KEY = "matched_partners";
+const ATTEMPTS_KEY = "match_attempts";
 
 const GameContext = createContext<GameContextType | null>(null);
 
@@ -71,6 +84,19 @@ const persistPartners = (partners: MatchedPartner[]) => {
   localStorage.setItem(PARTNERS_KEY, JSON.stringify(partners));
 };
 
+const loadAttempts = (): MatchAttempt[] => {
+  try {
+    const raw = localStorage.getItem(ATTEMPTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const persistAttempts = (attempts: MatchAttempt[]) => {
+  localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attempts));
+};
+
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<GameState>({
     currentLocationId: 1,
@@ -84,14 +110,18 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     showResponse: null,
     locationCompleted: false,
     matchedPartners: [],
+    matchAttempts: [],
   });
 
-  // hydrate partners from localStorage
+  // hydrate partners + attempts from localStorage
   useEffect(() => {
     const partners = loadPartners();
-    if (partners.length > 0) {
-      setState((s) => ({ ...s, matchedPartners: partners }));
-    }
+    const attempts = loadAttempts();
+    setState((s) => ({
+      ...s,
+      matchedPartners: partners.length > 0 ? partners : s.matchedPartners,
+      matchAttempts: attempts.length > 0 ? attempts : s.matchAttempts,
+    }));
   }, []);
 
   const startQuiz = useCallback(() => {
@@ -176,6 +206,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       showResponse: null,
       locationCompleted: false,
       matchedPartners: s.matchedPartners, // keep existing matches
+      matchAttempts: s.matchAttempts, // keep history
     }));
     // also reset retry count
     try { localStorage.removeItem("match_retry_count"); } catch {}
@@ -210,6 +241,19 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
+  const addMatchAttempt = useCallback((attempt: Omit<MatchAttempt, "id" | "attemptedAt">) => {
+    setState((s) => {
+      const newAttempt: MatchAttempt = {
+        ...attempt,
+        id: `attempt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        attemptedAt: new Date().toISOString(),
+      };
+      const next = [newAttempt, ...s.matchAttempts];
+      persistAttempts(next);
+      return { ...s, matchAttempts: next };
+    });
+  }, []);
+
   return (
     <GameContext.Provider
       value={{
@@ -224,6 +268,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addMatchedPartner,
         updatePartnerTemperature,
         updatePartnerLastMessage,
+        addMatchAttempt,
       }}
     >
       {children}
