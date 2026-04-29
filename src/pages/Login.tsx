@@ -51,12 +51,16 @@ const Login = () => {
       toast.error("성별을 선택해주세요");
       return;
     }
-    const n = Number(age);
-    if (!Number.isInteger(n) || n < 1 || n > 150) {
-      toast.error("올바른 나이를 입력해주세요 (1~150)");
+    const n = calcAge(birthdate ? format(birthdate, "yyyy-MM-dd") : undefined);
+    if (!birthdate || n === undefined || n < 1 || n > 150) {
+      toast.error("올바른 생년월일을 선택해주세요");
       return;
     }
-    updateProfile({ nickname: trimmed, gender: gender as "male" | "female" | "other", age: n });
+    updateProfile({
+      nickname: trimmed,
+      gender: gender as "male" | "female" | "other",
+      birthdate: format(birthdate, "yyyy-MM-dd"),
+    });
     toast.success(`환영합니다, ${trimmed}님 ✨`);
     navigate(from, { replace: true });
   };
