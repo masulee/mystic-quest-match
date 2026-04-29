@@ -2,8 +2,13 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 import { StarField } from "@/components/StarField";
-import { useAuth, AuthProvider as Provider } from "@/contexts/AuthContext";
+import { useAuth, AuthProvider as Provider, calcAge } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
