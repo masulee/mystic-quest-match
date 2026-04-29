@@ -23,7 +23,9 @@ const Login = () => {
 
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [gender, setGender] = useState<"male" | "female" | "other" | "">(user?.gender ?? "");
-  const [age, setAge] = useState<string>(user?.age ? String(user.age) : "");
+  const [birthdate, setBirthdate] = useState<Date | undefined>(
+    user?.birthdate ? new Date(user.birthdate) : undefined
+  );
 
   const from = (location.state as any)?.from?.pathname ?? "/";
 
