@@ -43,6 +43,7 @@ interface GameState {
   showResponse: string | null;
   locationCompleted: boolean;
   matchedPartners: MatchedPartner[];
+  matchAttempts: MatchAttempt[];
 }
 
 interface GameContextType extends GameState {
@@ -56,9 +57,11 @@ interface GameContextType extends GameState {
   addMatchedPartner: (partner: MatchedPartner) => void;
   updatePartnerTemperature: (id: string, delta: number) => void;
   updatePartnerLastMessage: (id: string, message: string) => void;
+  addMatchAttempt: (attempt: Omit<MatchAttempt, "id" | "attemptedAt">) => void;
 }
 
 const PARTNERS_KEY = "matched_partners";
+const ATTEMPTS_KEY = "match_attempts";
 
 const GameContext = createContext<GameContextType | null>(null);
 
