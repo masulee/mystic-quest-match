@@ -110,14 +110,18 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     showResponse: null,
     locationCompleted: false,
     matchedPartners: [],
+    matchAttempts: [],
   });
 
-  // hydrate partners from localStorage
+  // hydrate partners + attempts from localStorage
   useEffect(() => {
     const partners = loadPartners();
-    if (partners.length > 0) {
-      setState((s) => ({ ...s, matchedPartners: partners }));
-    }
+    const attempts = loadAttempts();
+    setState((s) => ({
+      ...s,
+      matchedPartners: partners.length > 0 ? partners : s.matchedPartners,
+      matchAttempts: attempts.length > 0 ? attempts : s.matchAttempts,
+    }));
   }, []);
 
   const startQuiz = useCallback(() => {
