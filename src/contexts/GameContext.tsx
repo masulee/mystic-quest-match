@@ -241,6 +241,19 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
+  const addMatchAttempt = useCallback((attempt: Omit<MatchAttempt, "id" | "attemptedAt">) => {
+    setState((s) => {
+      const newAttempt: MatchAttempt = {
+        ...attempt,
+        id: `attempt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        attemptedAt: new Date().toISOString(),
+      };
+      const next = [newAttempt, ...s.matchAttempts];
+      persistAttempts(next);
+      return { ...s, matchAttempts: next };
+    });
+  }, []);
+
   return (
     <GameContext.Provider
       value={{
@@ -255,6 +268,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addMatchedPartner,
         updatePartnerTemperature,
         updatePartnerLastMessage,
+        addMatchAttempt,
       }}
     >
       {children}
