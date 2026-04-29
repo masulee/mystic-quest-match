@@ -100,10 +100,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const updateProfile = useCallback(
-    (data: { nickname: string; gender: User["gender"]; age: number }) => {
+    (data: { nickname: string; gender: User["gender"]; birthdate: string }) => {
       setUser((prev) => {
         if (!prev) return prev;
-        const next: User = { ...prev, ...data, profileCompleted: true };
+        const age = calcAge(data.birthdate);
+        const next: User = { ...prev, ...data, age, profileCompleted: true };
         persist(next);
         return next;
       });
