@@ -23,7 +23,7 @@ const traitBarColors: Record<PersonalityTrait, string> = {
 const MyPage = () => {
   const navigate = useNavigate();
   const { user, logout, updateProfile } = useAuth();
-  const { collectedItems, traitScores, matchedPartners, resetGame } = useGame();
+  const { collectedItems, traitScores, matchedPartners, matchAttempts, resetGame } = useGame();
 
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameDraft, setNicknameDraft] = useState(user?.nickname ?? "");
