@@ -206,6 +206,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       showResponse: null,
       locationCompleted: false,
       matchedPartners: s.matchedPartners, // keep existing matches
+      matchAttempts: s.matchAttempts, // keep history
     }));
     // also reset retry count
     try { localStorage.removeItem("match_retry_count"); } catch {}
