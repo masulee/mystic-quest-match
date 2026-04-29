@@ -2,8 +2,13 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 import { StarField } from "@/components/StarField";
-import { useAuth, AuthProvider as Provider } from "@/contexts/AuthContext";
+import { useAuth, AuthProvider as Provider, calcAge } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +23,9 @@ const Login = () => {
 
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [gender, setGender] = useState<"male" | "female" | "other" | "">(user?.gender ?? "");
-  const [age, setAge] = useState<string>(user?.age ? String(user.age) : "");
+  const [birthdate, setBirthdate] = useState<Date | undefined>(
+    user?.birthdate ? new Date(user.birthdate) : undefined
+  );
 
   const from = (location.state as any)?.from?.pathname ?? "/";
 
@@ -44,12 +51,16 @@ const Login = () => {
       toast.error("성별을 선택해주세요");
       return;
     }
-    const n = Number(age);
-    if (!Number.isInteger(n) || n < 1 || n > 150) {
-      toast.error("올바른 나이를 입력해주세요 (1~150)");
+    const n = calcAge(birthdate ? format(birthdate, "yyyy-MM-dd") : undefined);
+    if (!birthdate || n === undefined || n < 1 || n > 150) {
+      toast.error("올바른 생년월일을 선택해주세요");
       return;
     }
-    updateProfile({ nickname: trimmed, gender: gender as "male" | "female" | "other", age: n });
+    updateProfile({
+      nickname: trimmed,
+      gender: gender as "male" | "female" | "other",
+      birthdate: format(birthdate, "yyyy-MM-dd"),
+    });
     toast.success(`환영합니다, ${trimmed}님 ✨`);
     navigate(from, { replace: true });
   };
@@ -156,15 +167,44 @@ const Login = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm text-foreground/80">나이</label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={150}
-                  placeholder="나이를 입력하세요"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                />
+                <label className="text-sm text-foreground/80">생년월일</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-10",
+                        !birthdate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {birthdate ? (
+                        <>
+                          {format(birthdate, "yyyy년 M월 d일", { locale: ko })}
+                          <span className="ml-auto text-xs text-gold">
+                            만 {calcAge(format(birthdate, "yyyy-MM-dd"))}세
+                          </span>
+                        </>
+                      ) : (
+                        <span>생년월일을 선택하세요</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={birthdate}
+                      onSelect={setBirthdate}
+                      captionLayout="dropdown-buttons"
+                      fromYear={1900}
+                      toYear={new Date().getFullYear()}
+                      defaultMonth={birthdate ?? new Date(2000, 0)}
+                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <Button variant="golden" size="lg" className="w-full" onClick={handleSubmitProfile}>

@@ -11,6 +11,7 @@ export interface User {
   nickname?: string;
   gender?: "male" | "female" | "other";
   age?: number;
+  birthdate?: string; // ISO date string YYYY-MM-DD
   profileCompleted?: boolean;
 }
 
@@ -20,8 +21,19 @@ interface AuthContextType {
   loading: boolean;
   login: (provider: AuthProvider) => Promise<User>;
   logout: () => void;
-  updateProfile: (data: { nickname: string; gender: User["gender"]; age: number }) => void;
+  updateProfile: (data: { nickname: string; gender: User["gender"]; birthdate: string }) => void;
 }
+
+export const calcAge = (birthdate?: string): number | undefined => {
+  if (!birthdate) return undefined;
+  const b = new Date(birthdate);
+  if (Number.isNaN(b.getTime())) return undefined;
+  const now = new Date();
+  let age = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+  return age;
+};
 
 const STORAGE_KEY = "threads_of_fate_user";
 
@@ -88,10 +100,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const updateProfile = useCallback(
-    (data: { nickname: string; gender: User["gender"]; age: number }) => {
+    (data: { nickname: string; gender: User["gender"]; birthdate: string }) => {
       setUser((prev) => {
         if (!prev) return prev;
-        const next: User = { ...prev, ...data, profileCompleted: true };
+        const age = calcAge(data.birthdate);
+        const next: User = { ...prev, ...data, age, profileCompleted: true };
         persist(next);
         return next;
       });

@@ -49,7 +49,7 @@ const MyPage = () => {
     updateProfile({
       nickname: t,
       gender: user.gender ?? "other",
-      age: user.age ?? 20,
+      birthdate: user.birthdate ?? "",
     });
     setEditingNickname(false);
     toast.success("닉네임이 변경되었습니다");
