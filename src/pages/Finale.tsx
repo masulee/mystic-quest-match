@@ -486,7 +486,7 @@ const Finale = () => {
             <h3 className="font-display text-xl text-gradient-gold mb-2">반쪽 나침반을 얻었습니다</h3>
             "이 나침반은 단순한 도구가 아니야...<br />
             자네의 인연이 있는 방향을 가리킬 것이지."
-            <Button variant="golden" size="lg" onClick={() => advance("to-bridge")} className="animate-pulse-glow">
+            <Button variant="golden" size="lg" onClick={() => navigate("/?match=1#match")} className="animate-pulse-glow">
               🌉 운명의 다리로
             </Button>
           </Dialogue>
