@@ -1,11 +1,10 @@
-import { useEffect } from "react";
 import { StarField } from "@/components/StarField";
 import { ExplorationMap } from "@/components/ExplorationMap";
 import { ExplorationQuiz } from "@/components/ExplorationQuiz";
 import { PersonalityProfile } from "@/components/PersonalityProfile";
 import { Button } from "@/components/ui/button";
 import { useGame } from "@/contexts/GameContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const Explore = () => {
   const { collectedItems, resetGame } = useGame();
