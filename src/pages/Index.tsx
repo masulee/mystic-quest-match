@@ -85,7 +85,7 @@ const Index = () => {
       </section>
 
       {/* Match Section */}
-      <section className="relative px-4 py-20 max-w-4xl mx-auto">
+      <section id="match" className="relative px-4 py-20 max-w-4xl mx-auto scroll-mt-20">
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl md:text-4xl text-foreground mb-4">
             발견된 <span className="text-gradient-gold">인연</span>
