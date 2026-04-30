@@ -1,12 +1,26 @@
+import { useEffect } from "react";
 import { StarField } from "@/components/StarField";
 import { JourneyPath } from "@/components/JourneyPath";
 import { ItemCollection } from "@/components/ItemCollection";
 import { MatchPreview } from "@/components/MatchPreview";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const Index = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.slice(1);
+      // Wait for layout
+      const t = setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+      return () => clearTimeout(t);
+    }
+  }, [location]);
+
   return (
     <div className="min-h-screen bg-gradient-night relative overflow-hidden">
       <StarField />
