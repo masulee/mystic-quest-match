@@ -487,7 +487,7 @@ const Finale = () => {
             "이 나침반은 단순한 도구가 아니야...<br />
             자네의 인연이 있는 방향을 가리킬 것이지."
             <Button variant="golden" size="lg" onClick={() => navigate("/?match=1#match")} className="animate-pulse-glow">
-              🌉 운명의 다리로
+              🌉 인연의 다리로
             </Button>
           </Dialogue>
         )}
