@@ -8,54 +8,8 @@ import { traitEmoji } from "@/lib/mockPartners";
 import ChatWordSelector from "@/components/ChatWordSelector";
 import { cn } from "@/lib/utils";
 
-type Category = "감정" | "장소" | "행동" | "시간";
 
-const CATEGORY_ICONS: Record<Category, string> = {
-  감정: "💖",
-  장소: "📍",
-  행동: "⚡",
-  시간: "⏳",
-};
 
-const WORD_BANK: Record<Category, string[]> = {
-  감정: [
-    "보고싶어", "설레", "편안해", "두근거려",
-    "행복해", "궁금해", "따뜻해", "좋아해",
-    "웃게돼", "감동이야",
-  ],
-  장소: [
-    "카페에서", "바닷가에서", "공원에서", "하늘 아래",
-    "골목길에서", "창가에서", "벤치에서", "옥상에서",
-    "숲속에서", "달빛 아래",
-  ],
-  행동: [
-    "걷고 싶어", "이야기하고 싶어", "같이 있고 싶어", "눈 마주치고 싶어",
-    "손잡고 싶어", "기대고 싶어", "웃고 싶어", "바라보고 싶어",
-    "기다릴게", "함께하고 싶어",
-  ],
-  시간: [
-    "지금", "오늘 밤", "내일도", "매일",
-    "언젠가", "이 순간", "새벽에", "해질녘에",
-    "항상", "다시",
-  ],
-};
-
-const buildSentence = (selected: Record<Category, string[]>): string => {
-  const parts: string[] = [];
-
-  // Natural ordering: 시간 → 장소 → 감정 → 행동
-  const time = selected["시간"] || [];
-  const place = selected["장소"] || [];
-  const emotion = selected["감정"] || [];
-  const action = selected["행동"] || [];
-
-  if (time.length) parts.push(time.join(" "));
-  if (place.length) parts.push(place.join(" "));
-  if (emotion.length) parts.push(emotion.join(", "));
-  if (action.length) parts.push(action.join(", "));
-
-  return parts.join(" ") || "";
-};
 
 type Message =
   | { role: "system"; text: string; id: string }
