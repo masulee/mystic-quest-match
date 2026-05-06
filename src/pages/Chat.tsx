@@ -27,10 +27,6 @@ const Chat = () => {
     [matchedPartners, partnerId]
   );
 
-  const [activeCategory, setActiveCategory] = useState<Category>("감정");
-  const [selected, setSelected] = useState<Record<Category, string[]>>({
-    감정: [], 장소: [], 행동: [], 시간: [],
-  });
   const [messages, setMessages] = useState<Message[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -70,24 +66,7 @@ const Chat = () => {
     );
   }
 
-  const totalSelected = Object.values(selected).reduce((sum, arr) => sum + arr.length, 0);
-  const canSend = totalSelected >= 1;
-  const preview = buildSentence(selected);
-
-  const toggleWord = (cat: Category, word: string) => {
-    setSelected((s) => {
-      const arr = s[cat];
-      const exists = arr.includes(word);
-      return {
-        ...s,
-        [cat]: exists ? arr.filter((w) => w !== word) : [...arr, word],
-      };
-    });
-  };
-
-  const handleSend = () => {
-    if (!canSend) return;
-    const text = buildSentence(selected);
+  const handleSend = (text: string) => {
     const msg: Message = {
       role: "me",
       id: `me-${Date.now()}`,
@@ -98,7 +77,6 @@ const Chat = () => {
     setMessages((m) => [...m, msg]);
     updatePartnerTemperature(partner.id, 5);
     updatePartnerLastMessage(partner.id, text);
-    setSelected({ 감정: [], 장소: [], 행동: [], 시간: [] });
 
     setTimeout(() => {
       const replies = [
@@ -124,8 +102,6 @@ const Chat = () => {
       ]);
     }, 1200);
   };
-
-  const categories = Object.keys(WORD_BANK) as Category[];
 
   return (
     <div className="min-h-screen bg-gradient-night relative overflow-hidden flex flex-col">
@@ -199,70 +175,9 @@ const Chat = () => {
         })}
       </div>
 
-      {/* Composer */}
-      <div className="relative z-10 border-t border-border/40 bg-background/80 backdrop-blur-md p-3 space-y-2">
-        {/* Preview */}
-        {preview && (
-          <div className="bg-card/60 border border-border/50 rounded-lg px-3 py-2">
-            <p className="text-xs text-muted-foreground mb-0.5">미리보기</p>
-            <p className="text-sm text-foreground">{preview}</p>
-          </div>
-        )}
-
-        {/* Category tabs */}
-        <div className="grid grid-cols-4 gap-2">
-          {categories.map((cat) => {
-            const count = selected[cat].length;
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={cn(
-                  "h-9 rounded-lg text-xs font-medium border transition-all flex items-center justify-center gap-1",
-                  activeCategory === cat
-                    ? "bg-gold text-primary-foreground border-gold"
-                    : "bg-card/60 text-foreground/80 border-border/50 hover:border-gold/50",
-                  count > 0 && activeCategory !== cat && "ring-1 ring-gold/40"
-                )}
-              >
-                <span>{CATEGORY_ICONS[cat]}</span>
-                <span>{cat}</span>
-                {count > 0 && <span className="text-[9px] bg-gold/20 rounded-full w-4 h-4 flex items-center justify-center">{count}</span>}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Word grid */}
-        <div className="grid grid-cols-2 gap-1.5">
-          {WORD_BANK[activeCategory].map((word) => {
-            const isActive = selected[activeCategory].includes(word);
-            return (
-              <button
-                key={word}
-                onClick={() => toggleWord(activeCategory, word)}
-                className={cn(
-                  "h-8 rounded-lg text-sm border transition-all",
-                  isActive
-                    ? "bg-gold text-primary-foreground border-gold"
-                    : "bg-card/60 text-foreground/90 border-border/50 hover:border-gold/50"
-                )}
-              >
-                {word}
-              </button>
-            );
-          })}
-        </div>
-
-        <Button
-          variant="golden"
-          size="lg"
-          disabled={!canSend}
-          onClick={handleSend}
-          className="w-full"
-        >
-          ✨ 전송 ({totalSelected}개 선택됨)
-        </Button>
+      {/* Composer - ChatWordSelector */}
+      <div className="relative z-10">
+        <ChatWordSelector onSend={handleSend} />
       </div>
     </div>
   );
