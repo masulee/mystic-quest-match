@@ -7,36 +7,53 @@ import { useGame } from "@/contexts/GameContext";
 import { traitEmoji } from "@/lib/mockPartners";
 import { cn } from "@/lib/utils";
 
-type Category = "감정" | "자연" | "행동" | "시간";
+type Category = "감정" | "장소" | "행동" | "시간";
 
 const CATEGORY_ICONS: Record<Category, string> = {
   감정: "💖",
-  자연: "🌿",
+  장소: "📍",
   행동: "⚡",
   시간: "⏳",
 };
 
 const WORD_BANK: Record<Category, string[]> = {
-  감정: ["그리움", "설렘", "따스함", "평온", "신비", "경이"],
-  자연: ["달빛", "별빛", "바람", "꽃잎", "물결", "숲"],
-  행동: ["흐르다", "춤추다", "속삭이다", "비추다", "감싸다", "떠오르다"],
-  시간: ["밤하늘에", "새벽녘에", "황혼 속에", "순간마다", "영원히", "지금"],
+  감정: [
+    "보고싶어", "설레", "편안해", "두근거려",
+    "행복해", "궁금해", "따뜻해", "좋아해",
+    "웃게돼", "감동이야",
+  ],
+  장소: [
+    "카페에서", "바닷가에서", "공원에서", "하늘 아래",
+    "골목길에서", "창가에서", "벤치에서", "옥상에서",
+    "숲속에서", "달빛 아래",
+  ],
+  행동: [
+    "걷고 싶어", "이야기하고 싶어", "같이 있고 싶어", "눈 마주치고 싶어",
+    "손잡고 싶어", "기대고 싶어", "웃고 싶어", "바라보고 싶어",
+    "기다릴게", "함께하고 싶어",
+  ],
+  시간: [
+    "지금", "오늘 밤", "내일도", "매일",
+    "언젠가", "이 순간", "새벽에", "해질녘에",
+    "항상", "다시",
+  ],
 };
 
-const SENTENCE_TEMPLATES = [
-  "{시간} {감정}이 {행동}, {자연} 사이로",
-  "{자연}처럼 {감정}이 {행동}, {시간}",
-  "{시간} {자연}이 {행동}, {감정}을 담아",
-  "{감정}의 {자연}이 {시간} {행동}",
-];
+const buildSentence = (selected: Record<Category, string[]>): string => {
+  const parts: string[] = [];
 
-const generateSentence = (selected: Record<Category, string>) => {
-  const tmpl = SENTENCE_TEMPLATES[Math.floor(Math.random() * SENTENCE_TEMPLATES.length)];
-  return tmpl
-    .replace("{감정}", selected["감정"])
-    .replace("{자연}", selected["자연"])
-    .replace("{행동}", selected["행동"])
-    .replace("{시간}", selected["시간"]);
+  // Natural ordering: 시간 → 장소 → 감정 → 행동
+  const time = selected["시간"] || [];
+  const place = selected["장소"] || [];
+  const emotion = selected["감정"] || [];
+  const action = selected["행동"] || [];
+
+  if (time.length) parts.push(time.join(" "));
+  if (place.length) parts.push(place.join(" "));
+  if (emotion.length) parts.push(emotion.join(", "));
+  if (action.length) parts.push(action.join(", "));
+
+  return parts.join(" ") || "";
 };
 
 type Message =
@@ -56,7 +73,9 @@ const Chat = () => {
   );
 
   const [activeCategory, setActiveCategory] = useState<Category>("감정");
-  const [selected, setSelected] = useState<Partial<Record<Category, string>>>({});
+  const [selected, setSelected] = useState<Record<Category, string[]>>({
+    감정: [], 장소: [], 행동: [], 시간: [],
+  });
   const [messages, setMessages] = useState<Message[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +90,7 @@ const Chat = () => {
       {
         role: "partner",
         id: "p-1",
-        text: "달빛 아래, 당신의 빛을 기다리고 있었어요.",
+        text: "오늘 밤 달빛 아래, 당신을 기다리고 있었어요.",
         trait: partner.trait,
         pct: partner.percentage,
       },
@@ -96,19 +115,24 @@ const Chat = () => {
     );
   }
 
-  const selectedCount = (Object.keys(selected) as Category[]).filter((k) => selected[k]).length;
-  const canSend = selectedCount === 4;
+  const totalSelected = Object.values(selected).reduce((sum, arr) => sum + arr.length, 0);
+  const canSend = totalSelected >= 1;
+  const preview = buildSentence(selected);
 
   const toggleWord = (cat: Category, word: string) => {
-    setSelected((s) => ({
-      ...s,
-      [cat]: s[cat] === word ? undefined : word,
-    }));
+    setSelected((s) => {
+      const arr = s[cat];
+      const exists = arr.includes(word);
+      return {
+        ...s,
+        [cat]: exists ? arr.filter((w) => w !== word) : [...arr, word],
+      };
+    });
   };
 
   const handleSend = () => {
     if (!canSend) return;
-    const text = generateSentence(selected as Record<Category, string>);
+    const text = buildSentence(selected);
     const msg: Message = {
       role: "me",
       id: `me-${Date.now()}`,
@@ -119,15 +143,18 @@ const Chat = () => {
     setMessages((m) => [...m, msg]);
     updatePartnerTemperature(partner.id, 5);
     updatePartnerLastMessage(partner.id, text);
-    setSelected({});
+    setSelected({ 감정: [], 장소: [], 행동: [], 시간: [] });
 
-    // Mock partner reply
     setTimeout(() => {
       const replies = [
-        "그 문장이 별빛처럼 마음에 닿았어요.",
-        "당신의 말이 바람처럼 스며들어요.",
-        "같은 시간 속에서 저도 그 온도를 느껴요.",
-        "당신의 단어 하나하나가 기억이 되네요.",
+        "그 말이 마음에 닿았어요 ☺️",
+        "저도 같은 마음이에요, 정말로.",
+        "당신이랑 같이 있고 싶어요.",
+        "그 말 듣고 웃음이 났어요 😊",
+        "오늘 밤, 저도 설레요.",
+        "다시 만날 수 있을까요?",
+        "그 순간을 함께하고 싶어요.",
+        "마음이 따뜻해지네요.",
       ];
       const reply = replies[Math.floor(Math.random() * replies.length)];
       setMessages((m) => [
@@ -142,6 +169,8 @@ const Chat = () => {
       ]);
     }, 1200);
   };
+
+  const categories = Object.keys(WORD_BANK) as Category[];
 
   return (
     <div className="min-h-screen bg-gradient-night relative overflow-hidden flex flex-col">
@@ -216,38 +245,49 @@ const Chat = () => {
       </div>
 
       {/* Composer */}
-      <div className="relative z-10 border-t border-border/40 bg-background/80 backdrop-blur-md p-3 space-y-3">
+      <div className="relative z-10 border-t border-border/40 bg-background/80 backdrop-blur-md p-3 space-y-2">
+        {/* Preview */}
+        {preview && (
+          <div className="bg-card/60 border border-border/50 rounded-lg px-3 py-2">
+            <p className="text-xs text-muted-foreground mb-0.5">미리보기</p>
+            <p className="text-sm text-foreground">{preview}</p>
+          </div>
+        )}
+
         {/* Category tabs */}
         <div className="grid grid-cols-4 gap-2">
-          {(Object.keys(WORD_BANK) as Category[]).map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={cn(
-                "h-9 rounded-lg text-xs font-medium border transition-all flex items-center justify-center gap-1",
-                activeCategory === cat
-                  ? "bg-gold text-primary-foreground border-gold"
-                  : "bg-card/60 text-foreground/80 border-border/50 hover:border-gold/50",
-                selected[cat] && activeCategory !== cat && "ring-1 ring-gold/40"
-              )}
-            >
-              <span>{CATEGORY_ICONS[cat]}</span>
-              <span>{cat}</span>
-              {selected[cat] && <span className="text-[9px]">✓</span>}
-            </button>
-          ))}
+          {categories.map((cat) => {
+            const count = selected[cat].length;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={cn(
+                  "h-9 rounded-lg text-xs font-medium border transition-all flex items-center justify-center gap-1",
+                  activeCategory === cat
+                    ? "bg-gold text-primary-foreground border-gold"
+                    : "bg-card/60 text-foreground/80 border-border/50 hover:border-gold/50",
+                  count > 0 && activeCategory !== cat && "ring-1 ring-gold/40"
+                )}
+              >
+                <span>{CATEGORY_ICONS[cat]}</span>
+                <span>{cat}</span>
+                {count > 0 && <span className="text-[9px] bg-gold/20 rounded-full w-4 h-4 flex items-center justify-center">{count}</span>}
+              </button>
+            );
+          })}
         </div>
 
         {/* Word grid */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           {WORD_BANK[activeCategory].map((word) => {
-            const isActive = selected[activeCategory] === word;
+            const isActive = selected[activeCategory].includes(word);
             return (
               <button
                 key={word}
                 onClick={() => toggleWord(activeCategory, word)}
                 className={cn(
-                  "h-9 rounded-lg text-sm border transition-all",
+                  "h-8 rounded-lg text-sm border transition-all",
                   isActive
                     ? "bg-gold text-primary-foreground border-gold"
                     : "bg-card/60 text-foreground/90 border-border/50 hover:border-gold/50"
@@ -266,7 +306,7 @@ const Chat = () => {
           onClick={handleSend}
           className="w-full"
         >
-          ✨ 문장 조합 & 전송 ({selectedCount}/4)
+          ✨ 전송 ({totalSelected}개 선택됨)
         </Button>
       </div>
     </div>
