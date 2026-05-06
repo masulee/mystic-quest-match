@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useGame } from "@/contexts/GameContext";
 import { traitEmoji } from "@/lib/mockPartners";
+import ChatWordSelector from "@/components/ChatWordSelector";
 import { cn } from "@/lib/utils";
 
 type Category = "감정" | "장소" | "행동" | "시간";
