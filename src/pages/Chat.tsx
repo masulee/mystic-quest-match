@@ -5,56 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useGame } from "@/contexts/GameContext";
 import { traitEmoji } from "@/lib/mockPartners";
+import ChatWordSelector from "@/components/ChatWordSelector";
 import { cn } from "@/lib/utils";
 
-type Category = "감정" | "장소" | "행동" | "시간";
 
-const CATEGORY_ICONS: Record<Category, string> = {
-  감정: "💖",
-  장소: "📍",
-  행동: "⚡",
-  시간: "⏳",
-};
 
-const WORD_BANK: Record<Category, string[]> = {
-  감정: [
-    "보고싶어", "설레", "편안해", "두근거려",
-    "행복해", "궁금해", "따뜻해", "좋아해",
-    "웃게돼", "감동이야",
-  ],
-  장소: [
-    "카페에서", "바닷가에서", "공원에서", "하늘 아래",
-    "골목길에서", "창가에서", "벤치에서", "옥상에서",
-    "숲속에서", "달빛 아래",
-  ],
-  행동: [
-    "걷고 싶어", "이야기하고 싶어", "같이 있고 싶어", "눈 마주치고 싶어",
-    "손잡고 싶어", "기대고 싶어", "웃고 싶어", "바라보고 싶어",
-    "기다릴게", "함께하고 싶어",
-  ],
-  시간: [
-    "지금", "오늘 밤", "내일도", "매일",
-    "언젠가", "이 순간", "새벽에", "해질녘에",
-    "항상", "다시",
-  ],
-};
-
-const buildSentence = (selected: Record<Category, string[]>): string => {
-  const parts: string[] = [];
-
-  // Natural ordering: 시간 → 장소 → 감정 → 행동
-  const time = selected["시간"] || [];
-  const place = selected["장소"] || [];
-  const emotion = selected["감정"] || [];
-  const action = selected["행동"] || [];
-
-  if (time.length) parts.push(time.join(" "));
-  if (place.length) parts.push(place.join(" "));
-  if (emotion.length) parts.push(emotion.join(", "));
-  if (action.length) parts.push(action.join(", "));
-
-  return parts.join(" ") || "";
-};
 
 type Message =
   | { role: "system"; text: string; id: string }
@@ -72,10 +27,6 @@ const Chat = () => {
     [matchedPartners, partnerId]
   );
 
-  const [activeCategory, setActiveCategory] = useState<Category>("감정");
-  const [selected, setSelected] = useState<Record<Category, string[]>>({
-    감정: [], 장소: [], 행동: [], 시간: [],
-  });
   const [messages, setMessages] = useState<Message[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -115,24 +66,7 @@ const Chat = () => {
     );
   }
 
-  const totalSelected = Object.values(selected).reduce((sum, arr) => sum + arr.length, 0);
-  const canSend = totalSelected >= 1;
-  const preview = buildSentence(selected);
-
-  const toggleWord = (cat: Category, word: string) => {
-    setSelected((s) => {
-      const arr = s[cat];
-      const exists = arr.includes(word);
-      return {
-        ...s,
-        [cat]: exists ? arr.filter((w) => w !== word) : [...arr, word],
-      };
-    });
-  };
-
-  const handleSend = () => {
-    if (!canSend) return;
-    const text = buildSentence(selected);
+  const handleSend = (text: string) => {
     const msg: Message = {
       role: "me",
       id: `me-${Date.now()}`,
@@ -143,7 +77,6 @@ const Chat = () => {
     setMessages((m) => [...m, msg]);
     updatePartnerTemperature(partner.id, 5);
     updatePartnerLastMessage(partner.id, text);
-    setSelected({ 감정: [], 장소: [], 행동: [], 시간: [] });
 
     setTimeout(() => {
       const replies = [
@@ -169,8 +102,6 @@ const Chat = () => {
       ]);
     }, 1200);
   };
-
-  const categories = Object.keys(WORD_BANK) as Category[];
 
   return (
     <div className="min-h-screen bg-gradient-night relative overflow-hidden flex flex-col">
@@ -244,70 +175,9 @@ const Chat = () => {
         })}
       </div>
 
-      {/* Composer */}
-      <div className="relative z-10 border-t border-border/40 bg-background/80 backdrop-blur-md p-3 space-y-2">
-        {/* Preview */}
-        {preview && (
-          <div className="bg-card/60 border border-border/50 rounded-lg px-3 py-2">
-            <p className="text-xs text-muted-foreground mb-0.5">미리보기</p>
-            <p className="text-sm text-foreground">{preview}</p>
-          </div>
-        )}
-
-        {/* Category tabs */}
-        <div className="grid grid-cols-4 gap-2">
-          {categories.map((cat) => {
-            const count = selected[cat].length;
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={cn(
-                  "h-9 rounded-lg text-xs font-medium border transition-all flex items-center justify-center gap-1",
-                  activeCategory === cat
-                    ? "bg-gold text-primary-foreground border-gold"
-                    : "bg-card/60 text-foreground/80 border-border/50 hover:border-gold/50",
-                  count > 0 && activeCategory !== cat && "ring-1 ring-gold/40"
-                )}
-              >
-                <span>{CATEGORY_ICONS[cat]}</span>
-                <span>{cat}</span>
-                {count > 0 && <span className="text-[9px] bg-gold/20 rounded-full w-4 h-4 flex items-center justify-center">{count}</span>}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Word grid */}
-        <div className="grid grid-cols-2 gap-1.5">
-          {WORD_BANK[activeCategory].map((word) => {
-            const isActive = selected[activeCategory].includes(word);
-            return (
-              <button
-                key={word}
-                onClick={() => toggleWord(activeCategory, word)}
-                className={cn(
-                  "h-8 rounded-lg text-sm border transition-all",
-                  isActive
-                    ? "bg-gold text-primary-foreground border-gold"
-                    : "bg-card/60 text-foreground/90 border-border/50 hover:border-gold/50"
-                )}
-              >
-                {word}
-              </button>
-            );
-          })}
-        </div>
-
-        <Button
-          variant="golden"
-          size="lg"
-          disabled={!canSend}
-          onClick={handleSend}
-          className="w-full"
-        >
-          ✨ 전송 ({totalSelected}개 선택됨)
-        </Button>
+      {/* Composer - ChatWordSelector */}
+      <div className="relative z-10">
+        <ChatWordSelector onSend={handleSend} />
       </div>
     </div>
   );
