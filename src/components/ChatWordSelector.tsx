@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { Copy, Check } from "lucide-react";
 
 type Category = "감정" | "장소" | "행동" | "시간" | "신비" | "위트";
 
@@ -21,15 +22,71 @@ const WORD_BANK: Record<Category, string[]> = {
   위트: ["내 탓이야 완전히","이게 다 네 탓이야","심장에 고장난 것 같아","왜 이러는 거야 진짜","이상하게 눈에 밟혀","자꾸 왜 나와","억울하게 좋아","어이없게 설레","어쩔 수 없잖아","이미 늦었어","도망가려 했는데","그냥 네가 문제야","사실 좋아한다고","솔직히 말하면","그런 거 아닌데 그런 거야","지금 티 나?","이러면 안 되는데","멈출 수가 없어","말이 안 나와","어떡하지 진짜"],
 };
 
-const ORDER: Category[] = ["시간", "장소", "감정", "행동", "신비", "위트"];
+// Build a natural Korean sentence: [시간], [장소] [감정/신비/위트] — [행동]
+function buildNaturalSentence(selected: Record<Category, string[]>): string {
+  const time = selected["시간"];
+  const place = selected["장소"];
+  const feeling = [...selected["감정"], ...selected["신비"], ...selected["위트"]];
+  const action = selected["행동"];
 
-function buildSentence(selected: Record<Category, string[]>): string {
   const parts: string[] = [];
-  for (const cat of ORDER) {
-    const words = selected[cat];
-    if (words.length) parts.push(words.join(", "));
+  if (time.length) parts.push(time.join(", "));
+  if (place.length) parts.push(place.join(", "));
+
+  const midAndEnd: string[] = [];
+  if (feeling.length) midAndEnd.push(feeling.join(", "));
+  if (action.length) midAndEnd.push(action.join(", "));
+
+  if (parts.length && midAndEnd.length) {
+    return parts.join(", ") + " " + midAndEnd.join(" — ");
   }
-  return parts.join(" — ");
+  if (parts.length) return parts.join(", ");
+  if (midAndEnd.length) return midAndEnd.join(" — ");
+  return "";
+}
+
+// Generate up to 3 sentence variations by shuffling/picking subsets
+function generateVariations(selected: Record<Category, string[]>): string[] {
+  const time = selected["시간"];
+  const place = selected["장소"];
+  const feeling = [...selected["감정"], ...selected["신비"], ...selected["위트"]];
+  const action = selected["행동"];
+
+  const pick = (arr: string[]) => arr.length ? arr[Math.floor(Math.random() * arr.length)] : "";
+  const totalSelected = time.length + place.length + feeling.length + action.length;
+  if (totalSelected === 0) return [];
+
+  const variations = new Set<string>();
+  // Always add the primary sentence
+  const primary = buildNaturalSentence(selected);
+  if (primary) variations.add(primary);
+
+  // Generate more variations by picking single items from each category
+  for (let i = 0; i < 20 && variations.size < 3; i++) {
+    const parts: string[] = [];
+    const t = pick(time);
+    const p = pick(place);
+    const f = pick(feeling);
+    const a = pick(action);
+
+    if (t) parts.push(t);
+    if (p) parts.push(p);
+    const tail: string[] = [];
+    if (f) tail.push(f);
+    if (a) tail.push(a);
+
+    let sentence = "";
+    if (parts.length && tail.length) {
+      sentence = parts.join(", ") + " " + tail.join(" — ");
+    } else if (parts.length) {
+      sentence = parts.join(", ");
+    } else if (tail.length) {
+      sentence = tail.join(" — ");
+    }
+    if (sentence) variations.add(sentence);
+  }
+
+  return Array.from(variations).slice(0, 3);
 }
 
 interface ChatWordSelectorProps {
@@ -43,13 +100,15 @@ const ChatWordSelector = ({ onSend }: ChatWordSelectorProps) => {
   });
   const tabsRef = useRef<HTMLDivElement>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [variations, setVariations] = useState<string[]>([]);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   const totalSelected = Object.values(selected).reduce((s, a) => s + a.length, 0);
-  const sentence = buildSentence(selected);
+  const sentence = buildNaturalSentence(selected);
 
   useEffect(() => {
     if (totalSelected > 0 && !showPreview) setShowPreview(true);
-    if (totalSelected === 0) setShowPreview(false);
+    if (totalSelected === 0) { setShowPreview(false); setVariations([]); }
   }, [totalSelected]);
 
   const catMeta = CATEGORIES.find((c) => c.key === active)!;
@@ -59,12 +118,27 @@ const ChatWordSelector = ({ onSend }: ChatWordSelectorProps) => {
       const arr = s[active];
       return { ...s, [active]: arr.includes(word) ? arr.filter((w) => w !== word) : [...arr, word] };
     });
+    setVariations([]);
   };
 
-  const handleSend = () => {
+  const handleCompose = () => {
     if (!sentence) return;
-    onSend?.(sentence);
+    const v = generateVariations(selected);
+    setVariations(v);
+  };
+
+  const handleSend = (text: string) => {
+    onSend?.(text);
     setSelected({ 감정: [], 장소: [], 행동: [], 시간: [], 신비: [], 위트: [] });
+    setVariations([]);
+  };
+
+  const handleCopy = async (text: string, idx: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 1500);
+    } catch { /* fallback: ignore */ }
   };
 
   const allSelected = Object.entries(selected).flatMap(([cat, words]) =>
@@ -126,15 +200,8 @@ const ChatWordSelector = ({ onSend }: ChatWordSelectorProps) => {
                 )}
                 style={
                   isSelected
-                    ? {
-                        background: catMeta.bg,
-                        borderColor: catMeta.color + "80",
-                        boxShadow: catMeta.glow,
-                      }
-                    : {
-                        background: "rgba(255,255,255,0.06)",
-                        borderColor: "rgba(255,255,255,0.1)",
-                      }
+                    ? { background: catMeta.bg, borderColor: catMeta.color + "80", boxShadow: catMeta.glow }
+                    : { background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)" }
                 }
               >
                 {word}
@@ -175,14 +242,13 @@ const ChatWordSelector = ({ onSend }: ChatWordSelectorProps) => {
           <p className="text-sm text-white/50 italic leading-relaxed">"{sentence}"</p>
         )}
 
+        {/* Compose button */}
         <button
-          onClick={handleSend}
+          onClick={handleCompose}
           disabled={!sentence}
           className={cn(
             "w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
-            sentence
-              ? "text-white hover:brightness-110"
-              : "text-white/30 cursor-not-allowed"
+            sentence ? "text-white hover:brightness-110" : "text-white/30 cursor-not-allowed"
           )}
           style={{
             background: sentence
@@ -192,6 +258,41 @@ const ChatWordSelector = ({ onSend }: ChatWordSelectorProps) => {
         >
           ✨ 문장 만들기 ({totalSelected}개)
         </button>
+
+        {/* Sentence variations */}
+        {variations.length > 0 && (
+          <div className="space-y-2 pt-1">
+            {variations.map((v, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-2 rounded-xl px-3 py-2.5 border border-white/10"
+                style={{ background: "rgba(255,255,255,0.04)" }}
+              >
+                <p className="flex-1 text-sm text-white/80 leading-relaxed">"{v}"</p>
+                <div className="flex gap-1 flex-shrink-0 pt-0.5">
+                  <button
+                    onClick={() => handleCopy(v, i)}
+                    className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                    title="복사"
+                  >
+                    {copiedIdx === i ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5 text-white/40" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleSend(v)}
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium text-white/90 hover:brightness-110 transition-all"
+                    style={{ background: "linear-gradient(135deg, #FF6B9D, #7B61FF)" }}
+                  >
+                    전송
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
