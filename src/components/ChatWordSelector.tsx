@@ -283,10 +283,10 @@ const ChatWordSelector = ({ onSend }: ChatWordSelectorProps) => {
                   </button>
                   <button
                     onClick={() => handleSend(v)}
-                    className="px-2.5 py-1 rounded-lg text-xs font-medium text-white/90 hover:brightness-110 transition-all"
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/90 hover:brightness-110 transition-all whitespace-nowrap"
                     style={{ background: "linear-gradient(135deg, #FF6B9D, #7B61FF)" }}
                   >
-                    전송
+                    채팅에 보내기
                   </button>
                 </div>
               </div>
