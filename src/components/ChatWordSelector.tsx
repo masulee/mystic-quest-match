@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Copy, Check } from "lucide-react";
+import { Send } from "lucide-react";
 
 type Category = "감정" | "장소" | "행동" | "시간" | "신비" | "위트";
 
@@ -22,128 +22,40 @@ const WORD_BANK: Record<Category, string[]> = {
   위트: ["내 탓이야 완전히","이게 다 네 탓이야","심장에 고장난 것 같아","왜 이러는 거야 진짜","이상하게 눈에 밟혀","자꾸 왜 나와","억울하게 좋아","어이없게 설레","어쩔 수 없잖아","이미 늦었어","도망가려 했는데","그냥 네가 문제야","사실 좋아한다고","솔직히 말하면","그런 거 아닌데 그런 거야","지금 티 나?","이러면 안 되는데","멈출 수가 없어","말이 안 나와","어떡하지 진짜"],
 };
 
-// Build a natural Korean sentence: [시간], [장소] [감정/신비/위트] — [행동]
-function buildNaturalSentence(selected: Record<Category, string[]>): string {
-  const time = selected["시간"];
-  const place = selected["장소"];
-  const feeling = [...selected["감정"], ...selected["신비"], ...selected["위트"]];
-  const action = selected["행동"];
-
-  const parts: string[] = [];
-  if (time.length) parts.push(time.join(", "));
-  if (place.length) parts.push(place.join(", "));
-
-  const midAndEnd: string[] = [];
-  if (feeling.length) midAndEnd.push(feeling.join(", "));
-  if (action.length) midAndEnd.push(action.join(", "));
-
-  if (parts.length && midAndEnd.length) {
-    return parts.join(", ") + " " + midAndEnd.join(" — ");
-  }
-  if (parts.length) return parts.join(", ");
-  if (midAndEnd.length) return midAndEnd.join(" — ");
-  return "";
-}
-
-// Generate up to 3 sentence variations by shuffling/picking subsets
-function generateVariations(selected: Record<Category, string[]>): string[] {
-  const time = selected["시간"];
-  const place = selected["장소"];
-  const feeling = [...selected["감정"], ...selected["신비"], ...selected["위트"]];
-  const action = selected["행동"];
-
-  const pick = (arr: string[]) => arr.length ? arr[Math.floor(Math.random() * arr.length)] : "";
-  const totalSelected = time.length + place.length + feeling.length + action.length;
-  if (totalSelected === 0) return [];
-
-  const variations = new Set<string>();
-  // Always add the primary sentence
-  const primary = buildNaturalSentence(selected);
-  if (primary) variations.add(primary);
-
-  // Generate more variations by picking single items from each category
-  for (let i = 0; i < 20 && variations.size < 3; i++) {
-    const parts: string[] = [];
-    const t = pick(time);
-    const p = pick(place);
-    const f = pick(feeling);
-    const a = pick(action);
-
-    if (t) parts.push(t);
-    if (p) parts.push(p);
-    const tail: string[] = [];
-    if (f) tail.push(f);
-    if (a) tail.push(a);
-
-    let sentence = "";
-    if (parts.length && tail.length) {
-      sentence = parts.join(", ") + " " + tail.join(" — ");
-    } else if (parts.length) {
-      sentence = parts.join(", ");
-    } else if (tail.length) {
-      sentence = tail.join(" — ");
-    }
-    if (sentence) variations.add(sentence);
-  }
-
-  return Array.from(variations).slice(0, 3);
-}
-
 interface ChatWordSelectorProps {
   onSend?: (text: string) => void;
 }
 
 const ChatWordSelector = ({ onSend }: ChatWordSelectorProps) => {
   const [active, setActive] = useState<Category>("감정");
-  const [selected, setSelected] = useState<Record<Category, string[]>>({
-    감정: [], 장소: [], 행동: [], 시간: [], 신비: [], 위트: [],
-  });
+  // Track words in selection order: { word, category }
+  const [orderedSelection, setOrderedSelection] = useState<{ word: string; cat: Category }[]>([]);
   const tabsRef = useRef<HTMLDivElement>(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [variations, setVariations] = useState<string[]>([]);
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
-  const totalSelected = Object.values(selected).reduce((s, a) => s + a.length, 0);
-  const sentence = buildNaturalSentence(selected);
-
-  useEffect(() => {
-    if (totalSelected > 0 && !showPreview) setShowPreview(true);
-    if (totalSelected === 0) { setShowPreview(false); setVariations([]); }
-  }, [totalSelected]);
+  const selectedInCategory = (cat: Category) =>
+    orderedSelection.filter((s) => s.cat === cat).map((s) => s.word);
 
   const catMeta = CATEGORIES.find((c) => c.key === active)!;
 
   const toggle = (word: string) => {
-    setSelected((s) => {
-      const arr = s[active];
-      return { ...s, [active]: arr.includes(word) ? arr.filter((w) => w !== word) : [...arr, word] };
+    setOrderedSelection((prev) => {
+      const exists = prev.some((s) => s.word === word && s.cat === active);
+      if (exists) return prev.filter((s) => !(s.word === word && s.cat === active));
+      return [...prev, { word, cat: active }];
     });
-    setVariations([]);
   };
 
-  const handleCompose = () => {
+  const sentence = orderedSelection.map((s) => s.word).join(", ");
+
+  const handleSend = () => {
     if (!sentence) return;
-    const v = generateVariations(selected);
-    setVariations(v);
+    onSend?.(sentence);
+    setOrderedSelection([]);
   };
 
-  const handleSend = (text: string) => {
-    onSend?.(text);
-    setSelected({ 감정: [], 장소: [], 행동: [], 시간: [], 신비: [], 위트: [] });
-    setVariations([]);
+  const removeChip = (word: string, cat: Category) => {
+    setOrderedSelection((prev) => prev.filter((s) => !(s.word === word && s.cat === cat)));
   };
-
-  const handleCopy = async (text: string, idx: number) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedIdx(idx);
-      setTimeout(() => setCopiedIdx(null), 1500);
-    } catch { /* fallback: ignore */ }
-  };
-
-  const allSelected = Object.entries(selected).flatMap(([cat, words]) =>
-    words.map((w) => ({ word: w, cat: cat as Category }))
-  );
 
   return (
     <div className="w-full max-w-[480px] mx-auto flex flex-col" style={{ background: "#1a1025" }}>
@@ -155,7 +67,7 @@ const ChatWordSelector = ({ onSend }: ChatWordSelectorProps) => {
       >
         {CATEGORIES.map((cat) => {
           const isActive = active === cat.key;
-          const count = selected[cat.key].length;
+          const count = selectedInCategory(cat.key).length;
           return (
             <button
               key={cat.key}
@@ -186,10 +98,10 @@ const ChatWordSelector = ({ onSend }: ChatWordSelectorProps) => {
       </div>
 
       {/* Word Chips */}
-      <div className="flex-1 overflow-y-auto px-3 py-3">
+      <div className="flex-1 overflow-y-auto px-3 py-3" style={{ maxHeight: "200px" }}>
         <div className="flex flex-wrap gap-2">
           {WORD_BANK[active].map((word) => {
-            const isSelected = selected[active].includes(word);
+            const isSelected = selectedInCategory(active).includes(word);
             return (
               <button
                 key={word}
@@ -211,89 +123,43 @@ const ChatWordSelector = ({ onSend }: ChatWordSelectorProps) => {
         </div>
       </div>
 
-      {/* Preview Area */}
-      <div
-        className={cn(
-          "border-t border-white/10 px-3 py-3 space-y-2 transition-all duration-300",
-          showPreview ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
-        )}
-        style={{ background: "rgba(26,16,37,0.95)" }}
-      >
-        {/* Selected chips */}
-        {allSelected.length > 0 && (
+      {/* Preview & Send */}
+      {orderedSelection.length > 0 && (
+        <div className="border-t border-white/10 px-3 py-3 space-y-2" style={{ background: "rgba(26,16,37,0.95)" }}>
+          {/* Selected chips in order */}
           <div className="flex flex-wrap gap-1.5">
-            {allSelected.map(({ word, cat }) => {
+            {orderedSelection.map(({ word, cat }, idx) => {
               const meta = CATEGORIES.find((c) => c.key === cat)!;
               return (
-                <span
-                  key={`${cat}-${word}`}
-                  className="px-2.5 py-1 rounded-full text-xs text-white border"
+                <button
+                  key={`${cat}-${word}-${idx}`}
+                  onClick={() => removeChip(word, cat)}
+                  className="px-2.5 py-1 rounded-full text-xs text-white border flex items-center gap-1 hover:brightness-125 transition-all"
                   style={{ background: meta.bg, borderColor: meta.color + "50" }}
                 >
                   {word}
-                </span>
+                  <span className="text-white/40 text-[10px]">✕</span>
+                </button>
               );
             })}
           </div>
-        )}
 
-        {/* Sentence preview */}
-        {sentence && (
+          {/* Sentence preview */}
           <p className="text-sm text-white/50 italic leading-relaxed">"{sentence}"</p>
-        )}
 
-        {/* Compose button */}
-        <button
-          onClick={handleCompose}
-          disabled={!sentence}
-          className={cn(
-            "w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
-            sentence ? "text-white hover:brightness-110" : "text-white/30 cursor-not-allowed"
-          )}
-          style={{
-            background: sentence
-              ? "linear-gradient(135deg, #FF6B9D, #7B61FF, #C084FC)"
-              : "rgba(255,255,255,0.08)",
-          }}
-        >
-          ✨ 문장 만들기 ({totalSelected}개)
-        </button>
-
-        {/* Sentence variations */}
-        {variations.length > 0 && (
-          <div className="space-y-2 pt-1">
-            {variations.map((v, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-2 rounded-xl px-3 py-2.5 border border-white/10"
-                style={{ background: "rgba(255,255,255,0.04)" }}
-              >
-                <p className="flex-1 text-sm text-white/80 leading-relaxed">"{v}"</p>
-                <div className="flex gap-1 flex-shrink-0 pt-0.5">
-                  <button
-                    onClick={() => handleCopy(v, i)}
-                    className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                    title="복사"
-                  >
-                    {copiedIdx === i ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5 text-white/40" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleSend(v)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/90 hover:brightness-110 transition-all whitespace-nowrap"
-                    style={{ background: "linear-gradient(135deg, #FF6B9D, #7B61FF)" }}
-                  >
-                    채팅에 보내기
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+          {/* Send button */}
+          <button
+            onClick={handleSend}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white hover:brightness-110 transition-all duration-200 flex items-center justify-center gap-2"
+            style={{
+              background: "linear-gradient(135deg, #FF6B9D, #7B61FF, #C084FC)",
+            }}
+          >
+            <Send className="w-4 h-4" />
+            채팅에 보내기
+          </button>
+        </div>
+      )}
     </div>
   );
 };
