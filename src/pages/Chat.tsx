@@ -7,9 +7,7 @@ import { useGame } from "@/contexts/GameContext";
 import { traitEmoji } from "@/lib/mockPartners";
 import ChatWordSelector from "@/components/ChatWordSelector";
 import { cn } from "@/lib/utils";
-
-
-
+import { Sparkles, Send } from "lucide-react";
 
 type Message =
   | { role: "system"; text: string; id: string }
@@ -28,7 +26,11 @@ const Chat = () => {
   );
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const [showSelector, setShowSelector] = useState(false);
+  const [inputText, setInputText] = useState("");
+  const [inputGlow, setInputGlow] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!partner) return;
@@ -66,7 +68,20 @@ const Chat = () => {
     );
   }
 
-  const handleSend = (text: string) => {
+  const handleInsertFromSelector = (text: string) => {
+    setShowSelector(false);
+    setInputText(text);
+    setInputGlow(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+      setInputGlow(false);
+    }, 1200);
+  };
+
+  const handleSendMessage = () => {
+    const text = inputText.trim();
+    if (!text) return;
+
     const msg: Message = {
       role: "me",
       id: `me-${Date.now()}`,
@@ -75,6 +90,7 @@ const Chat = () => {
       pct: partner.percentage,
     };
     setMessages((m) => [...m, msg]);
+    setInputText("");
     updatePartnerTemperature(partner.id, 5);
     updatePartnerLastMessage(partner.id, text);
 
@@ -175,10 +191,78 @@ const Chat = () => {
         })}
       </div>
 
-      {/* Composer - ChatWordSelector */}
-      <div className="relative z-10">
-        <ChatWordSelector onSend={handleSend} />
+      {/* Chat Input Bar */}
+      <div className="relative z-10 px-4 py-3 border-t border-border/40 bg-background/60 backdrop-blur-md">
+        <div className="flex items-center gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            placeholder="단어를 조합해 메시지를 보내세요..."
+            className={cn(
+              "flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all duration-500",
+              inputGlow && "border-mystic-purple/60 shadow-[0_0_20px_rgba(192,132,252,0.4)]"
+            )}
+          />
+          <button
+            onClick={handleSendMessage}
+            disabled={!inputText.trim()}
+            className={cn(
+              "p-2.5 rounded-xl transition-all duration-200",
+              inputText.trim()
+                ? "bg-gradient-to-r from-mystic-purple to-gold/80 text-white hover:brightness-110"
+                : "bg-white/5 text-white/30 cursor-not-allowed"
+            )}
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Floating ✨ button */}
+      {!showSelector && (
+        <button
+          onClick={() => setShowSelector(true)}
+          className="fixed bottom-24 right-4 z-30 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform duration-200"
+          style={{
+            background: "linear-gradient(135deg, #FF6B9D, #7B61FF, #C084FC)",
+            boxShadow: "0 4px 20px rgba(123,97,255,0.4)",
+          }}
+        >
+          <Sparkles className="w-6 h-6" />
+        </button>
+      )}
+
+      {/* Word Selector Panel (slide up/down) */}
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-20 transition-transform duration-300 ease-in-out",
+          showSelector ? "translate-y-0" : "translate-y-full"
+        )}
+      >
+        <div className="relative">
+          {/* Close handle */}
+          <button
+            onClick={() => setShowSelector(false)}
+            className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-md rounded-t-xl px-6 py-1 text-xs text-white/60 hover:text-white/90 transition-colors"
+          >
+            ▼ 닫기
+          </button>
+          <div className="max-h-[60vh] overflow-y-auto">
+            <ChatWordSelector onSend={handleInsertFromSelector} />
+          </div>
+        </div>
+      </div>
+
+      {/* Overlay when selector is open */}
+      {showSelector && (
+        <div
+          className="fixed inset-0 z-[15] bg-black/30"
+          onClick={() => setShowSelector(false)}
+        />
+      )}
     </div>
   );
 };
