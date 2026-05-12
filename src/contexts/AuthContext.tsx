@@ -97,7 +97,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return u;
   }, []);
 
+  const buildUserFromSupabase = useCallback(async (sUser: { id: string; email?: string | null }): Promise<User> => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("nickname, gender, birthdate, age, avatar_url, profile_completed")
+      .eq("id", sUser.id)
+      .maybeSingle();
+
+    const u: User = {
+      id: sUser.id,
+      name: profile?.nickname ?? sUser.email?.split("@")[0] ?? "여행자",
+      email: sUser.email ?? "",
+      avatar: profile?.avatar_url ?? "✨",
+      provider: "email",
+      nickname: profile?.nickname ?? undefined,
+      gender: (profile?.gender as User["gender"]) ?? undefined,
+      age: profile?.age ?? undefined,
+      birthdate: profile?.birthdate ?? undefined,
+      profileCompleted: profile?.profile_completed ?? false,
+    };
+    return u;
+  }, []);
+
+  const signUpWithEmail = useCallback(
+    async (email: string, password: string): Promise<{ needsConfirmation: boolean }> => {
+      const redirectUrl = `${window.location.origin}/`;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: redirectUrl },
+      });
+      if (error) throw error;
+      if (data.session && data.user) {
+        const u = await buildUserFromSupabase(data.user);
+        setUser(u);
+        persist(u);
+        return { needsConfirmation: false };
+      }
+      return { needsConfirmation: true };
+    },
+    [buildUserFromSupabase]
+  );
+
+  const signInWithEmail = useCallback(
+    async (email: string, password: string): Promise<User> => {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (!data.user) throw new Error("로그인에 실패했어요");
+      const u = await buildUserFromSupabase(data.user);
+      setUser(u);
+      persist(u);
+      return u;
+    },
+    [buildUserFromSupabase]
+  );
+
   const logout = useCallback(() => {
+    supabase.auth.signOut().catch(() => {});
     setUser(null);
     persist(null);
   }, []);
@@ -109,6 +165,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const age = calcAge(data.birthdate);
         const next: User = { ...prev, ...data, age, profileCompleted: true };
         persist(next);
+        // Persist to DB if real auth user
+        supabase
+          .from("profiles")
+          .update({
+            nickname: data.nickname,
+            gender: data.gender as any,
+            birthdate: data.birthdate,
+            age,
+            profile_completed: true,
+          })
+          .eq("id", prev.id)
+          .then(() => {});
         return next;
       });
     },
@@ -117,7 +185,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, loading, login, logout, updateProfile }}
+      value={{
+        user,
+        isAuthenticated: !!user,
+        loading,
+        login,
+        signUpWithEmail,
+        signInWithEmail,
+        logout,
+        updateProfile,
+      }}
     >
       {children}
     </AuthContext.Provider>
