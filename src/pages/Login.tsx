@@ -7,14 +7,55 @@ import { useAuth, AuthProvider as Provider, calcAge } from "@/contexts/AuthConte
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type Step = "sns" | "profile";
+type Step = "consent" | "sns" | "profile";
+
+const CONSENT_KEY = "privacy_consent_v1";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, signUpWithEmail, signInWithEmail, updateProfile, user } = useAuth();
-  const [step, setStep] = useState<Step>(user && !user.profileCompleted ? "profile" : "sns");
+  const alreadyConsented =
+    typeof window !== "undefined" && localStorage.getItem(CONSENT_KEY) === "true";
+  const [step, setStep] = useState<Step>(
+    user && !user.profileCompleted ? "profile" : alreadyConsented ? "sns" : "consent"
+  );
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
+
+  // 동의 항목
+  const [agreeAll, setAgreeAll] = useState(false);
+  const [agreeAge, setAgreeAge] = useState(false);
+  const [agreeTos, setAgreeTos] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeMarketing, setAgreeMarketing] = useState(false);
+
+  const requiredOk = agreeAge && agreeTos && agreePrivacy;
+
+  const toggleAll = (v: boolean) => {
+    setAgreeAll(v);
+    setAgreeAge(v);
+    setAgreeTos(v);
+    setAgreePrivacy(v);
+    setAgreeMarketing(v);
+  };
+
+  const handleConsentNext = () => {
+    if (!requiredOk) {
+      toast.error("필수 항목에 모두 동의해주세요");
+      return;
+    }
+    try {
+      localStorage.setItem(CONSENT_KEY, "true");
+      localStorage.setItem(
+        "privacy_consent_meta",
+        JSON.stringify({
+          at: new Date().toISOString(),
+          marketing: agreeMarketing,
+        })
+      );
+    } catch {}
+    setStep("sns");
+  };
 
   const [emailMode, setEmailMode] = useState<"signin" | "signup">("signup");
   const [email, setEmail] = useState("");
@@ -145,12 +186,82 @@ const Login = () => {
           <div className="text-5xl mb-3">🌙</div>
           <h1 className="font-display text-3xl text-gradient-gold">인연의 조각</h1>
           <p className="text-xs text-muted-foreground mt-2 tracking-widest">
-            {step === "sns" ? "운명의 여정을 시작하세요" : "당신을 알려주세요"}
+            {step === "consent"
+              ? "시작 전 약관에 동의해주세요"
+              : step === "sns"
+              ? "운명의 여정을 시작하세요"
+              : "당신을 알려주세요"}
           </p>
         </div>
 
         <div className="bg-card/50 backdrop-blur-sm border border-gold/20 rounded-2xl p-6 md:p-8 space-y-5 animate-fade-in">
-          {step === "sns" ? (
+          {step === "consent" ? (
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-gold/30 bg-gold/5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreeAll}
+                  onChange={(e) => toggleAll(e.target.checked)}
+                  className="w-5 h-5 accent-amber-400"
+                />
+                <span className="text-sm font-medium text-gold">전체 동의</span>
+              </label>
+
+              <div className="space-y-2 text-sm">
+                {[
+                  { key: "age", label: "만 14세 이상입니다", required: true, checked: agreeAge, set: setAgreeAge },
+                  { key: "tos", label: "서비스 이용약관 동의", required: true, checked: agreeTos, set: setAgreeTos },
+                  { key: "privacy", label: "개인정보 수집·이용 동의", required: true, checked: agreePrivacy, set: setAgreePrivacy },
+                  { key: "marketing", label: "마케팅 정보 수신 동의", required: false, checked: agreeMarketing, set: setAgreeMarketing },
+                ].map((item) => (
+                  <label
+                    key={item.key}
+                    className="flex items-start gap-3 p-3 rounded-lg border border-border/50 hover:border-gold/40 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={item.checked}
+                      onChange={(e) => {
+                        item.set(e.target.checked);
+                        setAgreeAll(false);
+                      }}
+                      className="w-5 h-5 mt-0.5 accent-amber-400"
+                    />
+                    <div className="flex-1 text-foreground/90">
+                      <span className={item.required ? "text-gold mr-1" : "text-muted-foreground mr-1"}>
+                        [{item.required ? "필수" : "선택"}]
+                      </span>
+                      {item.label}
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              <details className="text-xs text-muted-foreground bg-background/40 rounded-lg p-3 border border-border/40">
+                <summary className="cursor-pointer text-foreground/80">개인정보 수집·이용 안내 보기</summary>
+                <div className="mt-2 space-y-1 leading-relaxed">
+                  <p>• 수집 항목: 이메일, 닉네임, 성별, 생년월일, 프로필 이미지(선택)</p>
+                  <p>• 이용 목적: 회원 식별, 매칭 서비스 제공, 채팅 기능 운영</p>
+                  <p>• 보유 기간: 회원 탈퇴 시까지 (관련 법령에 따라 일정 기간 보관 가능)</p>
+                  <p>• 동의를 거부할 수 있으나, 거부 시 서비스 이용이 제한됩니다.</p>
+                </div>
+              </details>
+
+              <Button
+                variant="golden"
+                size="lg"
+                className="w-full"
+                onClick={handleConsentNext}
+                disabled={!requiredOk}
+              >
+                동의하고 계속하기 ✨
+              </Button>
+
+              <Button variant="ethereal" size="lg" className="w-full" onClick={() => navigate("/")}>
+                👣 둘러보기
+              </Button>
+            </div>
+          ) : step === "sns" ? (
             <>
               <button
                 onClick={() => handleSnsLogin("google")}
