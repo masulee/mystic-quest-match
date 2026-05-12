@@ -84,9 +84,12 @@ const Login = () => {
           setStep("profile");
         }
       } else {
-        await signInWithEmail(e, password);
-        // Profile completion check handled in step state via user effect below
-        setStep("profile");
+        const u = await signInWithEmail(e, password);
+        if (u.profileCompleted) {
+          navigate(from, { replace: true });
+        } else {
+          setStep("profile");
+        }
       }
     } catch (err: any) {
       const msg = err?.message ?? "";
