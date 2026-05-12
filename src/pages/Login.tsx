@@ -62,6 +62,49 @@ const Login = () => {
     }
   };
 
+  const handleEmailSubmit = async () => {
+    const e = email.trim();
+    if (!/^\S+@\S+\.\S+$/.test(e)) {
+      toast.error("올바른 이메일을 입력해주세요");
+      return;
+    }
+    if (password.length < 6) {
+      toast.error("비밀번호는 6자 이상이어야 해요");
+      return;
+    }
+    setEmailLoading(true);
+    try {
+      if (emailMode === "signup") {
+        const { needsConfirmation } = await signUpWithEmail(e, password);
+        if (needsConfirmation) {
+          toast.success("확인 메일을 보냈어요. 이메일 인증 후 로그인해주세요 ✉️");
+          setEmailMode("signin");
+        } else {
+          toast.success("가입 완료! ✨");
+          setStep("profile");
+        }
+      } else {
+        await signInWithEmail(e, password);
+        // Profile completion check handled in step state via user effect below
+        setStep("profile");
+      }
+    } catch (err: any) {
+      const msg = err?.message ?? "";
+      if (msg.includes("already registered") || msg.includes("already been registered")) {
+        toast.error("이미 가입된 이메일이에요. 로그인 해주세요.");
+        setEmailMode("signin");
+      } else if (msg.includes("Invalid login")) {
+        toast.error("이메일 또는 비밀번호가 올바르지 않아요");
+      } else if (msg.includes("Email not confirmed")) {
+        toast.error("이메일 인증이 필요해요. 메일함을 확인해주세요.");
+      } else {
+        toast.error(msg || "처리 중 오류가 발생했어요");
+      }
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   const handleSubmitProfile = () => {
     const trimmed = nickname.trim();
     if (!trimmed || trimmed.length > 20) {
