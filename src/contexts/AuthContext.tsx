@@ -21,6 +21,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   login: (provider: AuthProvider) => Promise<User>;
+  signUpWithEmail: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
+  signInWithEmail: (email: string, password: string) => Promise<User>;
   logout: () => void;
   updateProfile: (data: { nickname: string; gender: User["gender"]; birthdate: string }) => void;
 }
