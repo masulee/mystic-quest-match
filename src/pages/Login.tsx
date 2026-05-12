@@ -184,8 +184,67 @@ const Login = () => {
                   <div className="w-full h-px bg-border/50" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="px-3 bg-card text-xs text-muted-foreground">또는</span>
+                  <span className="px-3 bg-card text-xs text-muted-foreground">또는 이메일로</span>
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEmailMode("signup")}
+                    className={cn(
+                      "h-9 rounded-lg text-xs border transition-all",
+                      emailMode === "signup"
+                        ? "border-gold bg-gold/15 text-gold"
+                        : "border-border/60 text-foreground/70 hover:border-gold/50"
+                    )}
+                  >
+                    회원가입
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmailMode("signin")}
+                    className={cn(
+                      "h-9 rounded-lg text-xs border transition-all",
+                      emailMode === "signin"
+                        ? "border-gold bg-gold/15 text-gold"
+                        : "border-border/60 text-foreground/70 hover:border-gold/50"
+                    )}
+                  >
+                    로그인
+                  </button>
+                </div>
+
+                <Input
+                  type="email"
+                  placeholder="이메일"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                />
+                <Input
+                  type="password"
+                  placeholder="비밀번호 (6자 이상)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={emailMode === "signup" ? "new-password" : "current-password"}
+                  onKeyDown={(e) => e.key === "Enter" && handleEmailSubmit()}
+                />
+
+                <Button
+                  variant="golden"
+                  size="lg"
+                  className="w-full"
+                  onClick={handleEmailSubmit}
+                  disabled={emailLoading}
+                >
+                  {emailLoading
+                    ? "처리 중..."
+                    : emailMode === "signup"
+                    ? "✉️ 이메일로 가입하기"
+                    : "✨ 이메일로 로그인"}
+                </Button>
               </div>
 
               <Button
