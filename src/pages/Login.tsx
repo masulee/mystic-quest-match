@@ -12,9 +12,14 @@ type Step = "sns" | "profile";
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, updateProfile, user } = useAuth();
+  const { login, signUpWithEmail, signInWithEmail, updateProfile, user } = useAuth();
   const [step, setStep] = useState<Step>(user && !user.profileCompleted ? "profile" : "sns");
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
+
+  const [emailMode, setEmailMode] = useState<"signin" | "signup">("signup");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
 
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [gender, setGender] = useState<"male" | "female" | "other" | "">(user?.gender ?? "");
@@ -54,6 +59,52 @@ const Login = () => {
       toast.error("로그인에 실패했어요. 다시 시도해주세요.");
     } finally {
       setLoadingProvider(null);
+    }
+  };
+
+  const handleEmailSubmit = async () => {
+    const e = email.trim();
+    if (!/^\S+@\S+\.\S+$/.test(e)) {
+      toast.error("올바른 이메일을 입력해주세요");
+      return;
+    }
+    if (password.length < 6) {
+      toast.error("비밀번호는 6자 이상이어야 해요");
+      return;
+    }
+    setEmailLoading(true);
+    try {
+      if (emailMode === "signup") {
+        const { needsConfirmation } = await signUpWithEmail(e, password);
+        if (needsConfirmation) {
+          toast.success("확인 메일을 보냈어요. 이메일 인증 후 로그인해주세요 ✉️");
+          setEmailMode("signin");
+        } else {
+          toast.success("가입 완료! ✨");
+          setStep("profile");
+        }
+      } else {
+        const u = await signInWithEmail(e, password);
+        if (u.profileCompleted) {
+          navigate(from, { replace: true });
+        } else {
+          setStep("profile");
+        }
+      }
+    } catch (err: any) {
+      const msg = err?.message ?? "";
+      if (msg.includes("already registered") || msg.includes("already been registered")) {
+        toast.error("이미 가입된 이메일이에요. 로그인 해주세요.");
+        setEmailMode("signin");
+      } else if (msg.includes("Invalid login")) {
+        toast.error("이메일 또는 비밀번호가 올바르지 않아요");
+      } else if (msg.includes("Email not confirmed")) {
+        toast.error("이메일 인증이 필요해요. 메일함을 확인해주세요.");
+      } else {
+        toast.error(msg || "처리 중 오류가 발생했어요");
+      }
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -133,8 +184,67 @@ const Login = () => {
                   <div className="w-full h-px bg-border/50" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="px-3 bg-card text-xs text-muted-foreground">또는</span>
+                  <span className="px-3 bg-card text-xs text-muted-foreground">또는 이메일로</span>
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEmailMode("signup")}
+                    className={cn(
+                      "h-9 rounded-lg text-xs border transition-all",
+                      emailMode === "signup"
+                        ? "border-gold bg-gold/15 text-gold"
+                        : "border-border/60 text-foreground/70 hover:border-gold/50"
+                    )}
+                  >
+                    회원가입
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmailMode("signin")}
+                    className={cn(
+                      "h-9 rounded-lg text-xs border transition-all",
+                      emailMode === "signin"
+                        ? "border-gold bg-gold/15 text-gold"
+                        : "border-border/60 text-foreground/70 hover:border-gold/50"
+                    )}
+                  >
+                    로그인
+                  </button>
+                </div>
+
+                <Input
+                  type="email"
+                  placeholder="이메일"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                />
+                <Input
+                  type="password"
+                  placeholder="비밀번호 (6자 이상)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={emailMode === "signup" ? "new-password" : "current-password"}
+                  onKeyDown={(e) => e.key === "Enter" && handleEmailSubmit()}
+                />
+
+                <Button
+                  variant="golden"
+                  size="lg"
+                  className="w-full"
+                  onClick={handleEmailSubmit}
+                  disabled={emailLoading}
+                >
+                  {emailLoading
+                    ? "처리 중..."
+                    : emailMode === "signup"
+                    ? "✉️ 이메일로 가입하기"
+                    : "✨ 이메일로 로그인"}
+                </Button>
               </div>
 
               <Button
