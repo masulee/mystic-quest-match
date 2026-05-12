@@ -7,14 +7,55 @@ import { useAuth, AuthProvider as Provider, calcAge } from "@/contexts/AuthConte
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type Step = "sns" | "profile";
+type Step = "consent" | "sns" | "profile";
+
+const CONSENT_KEY = "privacy_consent_v1";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, signUpWithEmail, signInWithEmail, updateProfile, user } = useAuth();
-  const [step, setStep] = useState<Step>(user && !user.profileCompleted ? "profile" : "sns");
+  const alreadyConsented =
+    typeof window !== "undefined" && localStorage.getItem(CONSENT_KEY) === "true";
+  const [step, setStep] = useState<Step>(
+    user && !user.profileCompleted ? "profile" : alreadyConsented ? "sns" : "consent"
+  );
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
+
+  // 동의 항목
+  const [agreeAll, setAgreeAll] = useState(false);
+  const [agreeAge, setAgreeAge] = useState(false);
+  const [agreeTos, setAgreeTos] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeMarketing, setAgreeMarketing] = useState(false);
+
+  const requiredOk = agreeAge && agreeTos && agreePrivacy;
+
+  const toggleAll = (v: boolean) => {
+    setAgreeAll(v);
+    setAgreeAge(v);
+    setAgreeTos(v);
+    setAgreePrivacy(v);
+    setAgreeMarketing(v);
+  };
+
+  const handleConsentNext = () => {
+    if (!requiredOk) {
+      toast.error("필수 항목에 모두 동의해주세요");
+      return;
+    }
+    try {
+      localStorage.setItem(CONSENT_KEY, "true");
+      localStorage.setItem(
+        "privacy_consent_meta",
+        JSON.stringify({
+          at: new Date().toISOString(),
+          marketing: agreeMarketing,
+        })
+      );
+    } catch {}
+    setStep("sns");
+  };
 
   const [emailMode, setEmailMode] = useState<"signin" | "signup">("signup");
   const [email, setEmail] = useState("");
