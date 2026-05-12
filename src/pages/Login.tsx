@@ -12,9 +12,14 @@ type Step = "sns" | "profile";
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, updateProfile, user } = useAuth();
+  const { login, signUpWithEmail, signInWithEmail, updateProfile, user } = useAuth();
   const [step, setStep] = useState<Step>(user && !user.profileCompleted ? "profile" : "sns");
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
+
+  const [emailMode, setEmailMode] = useState<"signin" | "signup">("signup");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
 
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [gender, setGender] = useState<"male" | "female" | "other" | "">(user?.gender ?? "");
