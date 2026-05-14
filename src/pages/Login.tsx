@@ -14,7 +14,7 @@ const CONSENT_KEY = "privacy_consent_v1";
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, signUpWithEmail, signInWithEmail, updateProfile, user } = useAuth();
+  const { login, updateProfile, user } = useAuth();
   const alreadyConsented =
     typeof window !== "undefined" && localStorage.getItem(CONSENT_KEY) === "true";
   const [step, setStep] = useState<Step>(
@@ -57,11 +57,6 @@ const Login = () => {
     setStep("sns");
   };
 
-  const [emailMode, setEmailMode] = useState<"signin" | "signup">("signup");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [emailLoading, setEmailLoading] = useState(false);
-
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [gender, setGender] = useState<"male" | "female" | "other" | "">(user?.gender ?? "");
   const [birthInput, setBirthInput] = useState<string>(
@@ -94,58 +89,17 @@ const Login = () => {
   const handleSnsLogin = async (provider: Provider) => {
     setLoadingProvider(provider);
     try {
-      await login(provider);
-      setStep("profile");
+      const u = await login(provider);
+      toast.success(`${provider === "google" ? "Google" : "Instagram"} 계정 연결 완료 ✨`);
+      if (u.profileCompleted) {
+        navigate(from, { replace: true });
+      } else {
+        setStep("profile");
+      }
     } catch {
       toast.error("로그인에 실패했어요. 다시 시도해주세요.");
     } finally {
       setLoadingProvider(null);
-    }
-  };
-
-  const handleEmailSubmit = async () => {
-    const e = email.trim();
-    if (!/^\S+@\S+\.\S+$/.test(e)) {
-      toast.error("올바른 이메일을 입력해주세요");
-      return;
-    }
-    if (password.length < 6) {
-      toast.error("비밀번호는 6자 이상이어야 해요");
-      return;
-    }
-    setEmailLoading(true);
-    try {
-      if (emailMode === "signup") {
-        const { needsConfirmation } = await signUpWithEmail(e, password);
-        if (needsConfirmation) {
-          toast.success("확인 메일을 보냈어요. 이메일 인증 후 로그인해주세요 ✉️");
-          setEmailMode("signin");
-        } else {
-          toast.success("가입 완료! ✨");
-          setStep("profile");
-        }
-      } else {
-        const u = await signInWithEmail(e, password);
-        if (u.profileCompleted) {
-          navigate(from, { replace: true });
-        } else {
-          setStep("profile");
-        }
-      }
-    } catch (err: any) {
-      const msg = err?.message ?? "";
-      if (msg.includes("already registered") || msg.includes("already been registered")) {
-        toast.error("이미 가입된 이메일이에요. 로그인 해주세요.");
-        setEmailMode("signin");
-      } else if (msg.includes("Invalid login")) {
-        toast.error("이메일 또는 비밀번호가 올바르지 않아요");
-      } else if (msg.includes("Email not confirmed")) {
-        toast.error("이메일 인증이 필요해요. 메일함을 확인해주세요.");
-      } else {
-        toast.error(msg || "처리 중 오류가 발생했어요");
-      }
-    } finally {
-      setEmailLoading(false);
     }
   };
 
@@ -189,7 +143,7 @@ const Login = () => {
             {step === "consent"
               ? "시작 전 약관에 동의해주세요"
               : step === "sns"
-              ? "운명의 여정을 시작하세요"
+              ? "SNS로 간편하게 시작하세요"
               : "당신을 알려주세요"}
           </p>
         </div>
@@ -240,7 +194,7 @@ const Login = () => {
               <details className="text-xs text-muted-foreground bg-background/40 rounded-lg p-3 border border-border/40">
                 <summary className="cursor-pointer text-foreground/80">개인정보 수집·이용 안내 보기</summary>
                 <div className="mt-2 space-y-1 leading-relaxed">
-                  <p>• 수집 항목: 이메일, 닉네임, 성별, 생년월일, 프로필 이미지(선택)</p>
+                  <p>• 수집 항목: SNS 계정 정보, 닉네임, 성별, 생년월일, 프로필 이미지(선택)</p>
                   <p>• 이용 목적: 회원 식별, 매칭 서비스 제공, 채팅 기능 운영</p>
                   <p>• 보유 기간: 회원 탈퇴 시까지 (관련 법령에 따라 일정 기간 보관 가능)</p>
                   <p>• 동의를 거부할 수 있으나, 거부 시 서비스 이용이 제한됩니다.</p>
@@ -263,6 +217,10 @@ const Login = () => {
             </div>
           ) : step === "sns" ? (
             <>
+              <p className="text-center text-xs text-muted-foreground -mt-1">
+                SNS 계정으로 간편하게 가입/로그인 할 수 있어요
+              </p>
+
               <button
                 onClick={() => handleSnsLogin("google")}
                 disabled={loadingProvider !== null}
@@ -290,73 +248,9 @@ const Login = () => {
                 {loadingProvider === "instagram" ? "연결 중..." : "Instagram으로 계속하기"}
               </button>
 
-              <div className="relative py-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full h-px bg-border/50" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="px-3 bg-card text-xs text-muted-foreground">또는 이메일로</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEmailMode("signup")}
-                    className={cn(
-                      "h-9 rounded-lg text-xs border transition-all",
-                      emailMode === "signup"
-                        ? "border-gold bg-gold/15 text-gold"
-                        : "border-border/60 text-foreground/70 hover:border-gold/50"
-                    )}
-                  >
-                    회원가입
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEmailMode("signin")}
-                    className={cn(
-                      "h-9 rounded-lg text-xs border transition-all",
-                      emailMode === "signin"
-                        ? "border-gold bg-gold/15 text-gold"
-                        : "border-border/60 text-foreground/70 hover:border-gold/50"
-                    )}
-                  >
-                    로그인
-                  </button>
-                </div>
-
-                <Input
-                  type="email"
-                  placeholder="이메일"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                />
-                <Input
-                  type="password"
-                  placeholder="비밀번호 (6자 이상)"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete={emailMode === "signup" ? "new-password" : "current-password"}
-                  onKeyDown={(e) => e.key === "Enter" && handleEmailSubmit()}
-                />
-
-                <Button
-                  variant="golden"
-                  size="lg"
-                  className="w-full"
-                  onClick={handleEmailSubmit}
-                  disabled={emailLoading}
-                >
-                  {emailLoading
-                    ? "처리 중..."
-                    : emailMode === "signup"
-                    ? "✉️ 이메일로 가입하기"
-                    : "✨ 이메일로 로그인"}
-                </Button>
-              </div>
+              <p className="text-[10px] text-center text-muted-foreground/80 leading-relaxed">
+                다음 단계에서 닉네임 · 성별 · 생년월일을 입력해주세요
+              </p>
 
               <Button
                 variant="ethereal"
@@ -369,6 +263,15 @@ const Login = () => {
             </>
           ) : (
             <div className="space-y-5">
+              <div className="text-center -mt-2">
+                <p className="text-xs text-gold">
+                  {user?.provider === "google" ? "Google" : user?.provider === "instagram" ? "Instagram" : "SNS"} 연결 완료 ✓
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  서비스 이용을 위해 추가 정보를 입력해주세요
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-sm text-foreground/80">닉네임</label>
                 <Input
@@ -428,7 +331,7 @@ const Login = () => {
               </div>
 
               <Button variant="golden" size="lg" className="w-full" onClick={handleSubmitProfile}>
-                ✨ 완료
+                ✨ 가입 완료
               </Button>
             </div>
           )}
