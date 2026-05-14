@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 
 export type AuthProvider = "google" | "instagram" | "email";
 
@@ -20,9 +21,9 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (provider: AuthProvider) => Promise<User>;
-  logout: () => void;
-  updateProfile: (data: { nickname: string; gender: User["gender"]; birthdate: string }) => void;
+  loginWithOAuth: (provider: "google") => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (data: { nickname: string; gender: User["gender"]; birthdate: string }) => Promise<void>;
 }
 
 export const calcAge = (birthdate?: string): number | undefined => {
@@ -36,8 +37,6 @@ export const calcAge = (birthdate?: string): number | undefined => {
   return age;
 };
 
-const STORAGE_KEY = "threads_of_fate_user";
-
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
@@ -46,25 +45,37 @@ export const useAuth = () => {
   return ctx;
 };
 
-const mockUserFor = (provider: AuthProvider): User => {
-  const id = `${provider}_${Math.random().toString(36).slice(2, 10)}`;
-  if (provider === "google") {
-    return {
-      id,
-      name: "여행자",
-      email: "traveler@gmail.com",
-      avatar: "🌙",
-      provider,
-      profileCompleted: false,
-    };
-  }
+const buildUserFromSupabase = async (sUser: {
+  id: string;
+  email?: string | null;
+  user_metadata?: any;
+  app_metadata?: any;
+}): Promise<User> => {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("nickname, gender, birthdate, age, avatar_url, profile_completed, provider")
+    .eq("id", sUser.id)
+    .maybeSingle();
+
+  const meta = sUser.user_metadata ?? {};
+  const providerRaw =
+    (profile?.provider as string | undefined) ??
+    (sUser.app_metadata?.provider as string | undefined) ??
+    "email";
+  const provider: AuthProvider =
+    providerRaw === "google" ? "google" : providerRaw === "instagram" ? "instagram" : "email";
+
   return {
-    id,
-    name: "Dreamer",
-    email: "dreamer@instagram",
-    avatar: "✨",
+    id: sUser.id,
+    name: profile?.nickname ?? meta.full_name ?? meta.name ?? sUser.email?.split("@")[0] ?? "여행자",
+    email: sUser.email ?? "",
+    avatar: profile?.avatar_url ?? meta.avatar_url ?? "✨",
     provider,
-    profileCompleted: false,
+    nickname: profile?.nickname ?? undefined,
+    gender: (profile?.gender as User["gender"]) ?? undefined,
+    age: profile?.age ?? undefined,
+    birthdate: profile?.birthdate ?? undefined,
+    profileCompleted: profile?.profile_completed ?? false,
   };
 };
 
@@ -73,79 +84,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setUser(JSON.parse(raw));
-    } catch {
-      // ignore
-    }
-    setLoading(false);
+    // Set up auth listener FIRST
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        // Defer to avoid deadlocks
+        setTimeout(() => {
+          buildUserFromSupabase(session.user).then(setUser).catch(() => {});
+        }, 0);
+      } else {
+        setUser(null);
+      }
+    });
+
+    // Then check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        buildUserFromSupabase(session.user).then(setUser).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  const persist = (u: User | null) => {
-    if (u) localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
-    else localStorage.removeItem(STORAGE_KEY);
-  };
-
-  const login = useCallback(async (provider: AuthProvider): Promise<User> => {
-    await new Promise((r) => setTimeout(r, 900)); // mock network
-    const u = mockUserFor(provider);
-    setUser(u);
-    persist(u);
-    return u;
+  const loginWithOAuth = useCallback(async (provider: "google") => {
+    const result = await lovable.auth.signInWithOAuth(provider, {
+      redirect_uri: window.location.origin + "/login",
+    });
+    if (result.error) throw result.error;
+    // If redirected, browser leaves the page; otherwise session is set and listener fires.
   }, []);
 
-  const buildUserFromSupabase = useCallback(async (sUser: { id: string; email?: string | null }): Promise<User> => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("nickname, gender, birthdate, age, avatar_url, profile_completed")
-      .eq("id", sUser.id)
-      .maybeSingle();
-
-    const u: User = {
-      id: sUser.id,
-      name: profile?.nickname ?? sUser.email?.split("@")[0] ?? "여행자",
-      email: sUser.email ?? "",
-      avatar: profile?.avatar_url ?? "✨",
-      provider: "email",
-      nickname: profile?.nickname ?? undefined,
-      gender: (profile?.gender as User["gender"]) ?? undefined,
-      age: profile?.age ?? undefined,
-      birthdate: profile?.birthdate ?? undefined,
-      profileCompleted: profile?.profile_completed ?? false,
-    };
-    return u;
-  }, []);
-
-  const logout = useCallback(() => {
-    supabase.auth.signOut().catch(() => {});
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut().catch(() => {});
     setUser(null);
-    persist(null);
   }, []);
 
   const updateProfile = useCallback(
-    (data: { nickname: string; gender: User["gender"]; birthdate: string }) => {
-      setUser((prev) => {
-        if (!prev) return prev;
-        const age = calcAge(data.birthdate);
-        const next: User = { ...prev, ...data, age, profileCompleted: true };
-        persist(next);
-        // Persist to DB if real auth user
-        supabase
-          .from("profiles")
-          .update({
-            nickname: data.nickname,
-            gender: data.gender as any,
-            birthdate: data.birthdate,
-            age,
-            profile_completed: true,
-          })
-          .eq("id", prev.id)
-          .then(() => {});
-        return next;
-      });
+    async (data: { nickname: string; gender: User["gender"]; birthdate: string }) => {
+      if (!user) return;
+      const age = calcAge(data.birthdate);
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          nickname: data.nickname,
+          gender: data.gender as any,
+          birthdate: data.birthdate,
+          age,
+          profile_completed: true,
+        })
+        .eq("id", user.id);
+      if (error) throw error;
+      setUser({ ...user, ...data, age, profileCompleted: true });
     },
-    []
+    [user]
   );
 
   return (
@@ -154,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         isAuthenticated: !!user,
         loading,
-        login,
+        loginWithOAuth,
         logout,
         updateProfile,
       }}
