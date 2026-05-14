@@ -117,39 +117,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return u;
   }, []);
 
-  const signUpWithEmail = useCallback(
-    async (email: string, password: string): Promise<{ needsConfirmation: boolean }> => {
-      const redirectUrl = `${window.location.origin}/`;
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: redirectUrl },
-      });
-      if (error) throw error;
-      if (data.session && data.user) {
-        const u = await buildUserFromSupabase(data.user);
-        setUser(u);
-        persist(u);
-        return { needsConfirmation: false };
-      }
-      return { needsConfirmation: true };
-    },
-    [buildUserFromSupabase]
-  );
-
-  const signInWithEmail = useCallback(
-    async (email: string, password: string): Promise<User> => {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      if (!data.user) throw new Error("로그인에 실패했어요");
-      const u = await buildUserFromSupabase(data.user);
-      setUser(u);
-      persist(u);
-      return u;
-    },
-    [buildUserFromSupabase]
-  );
-
   const logout = useCallback(() => {
     supabase.auth.signOut().catch(() => {});
     setUser(null);
