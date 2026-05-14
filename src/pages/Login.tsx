@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StarField } from "@/components/StarField";
-import { useAuth, AuthProvider as Provider, calcAge } from "@/contexts/AuthContext";
+import { useAuth, calcAge } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -14,13 +14,14 @@ const CONSENT_KEY = "privacy_consent_v1";
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, updateProfile, user } = useAuth();
+  const { loginWithOAuth, updateProfile, user, loading } = useAuth();
   const alreadyConsented =
     typeof window !== "undefined" && localStorage.getItem(CONSENT_KEY) === "true";
+
   const [step, setStep] = useState<Step>(
     user && !user.profileCompleted ? "profile" : alreadyConsented ? "sns" : "consent"
   );
-  const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<"google" | "instagram" | null>(null);
 
   // 동의 항목
   const [agreeAll, setAgreeAll] = useState(false);
@@ -30,6 +31,18 @@ const Login = () => {
   const [agreeMarketing, setAgreeMarketing] = useState(false);
 
   const requiredOk = agreeAge && agreeTos && agreePrivacy;
+
+  const from = (location.state as any)?.from?.pathname ?? "/";
+
+  // OAuth 콜백 후 user 가 세팅되면 자동 라우팅
+  useEffect(() => {
+    if (loading || !user) return;
+    if (user.profileCompleted) {
+      navigate(from, { replace: true });
+    } else {
+      setStep("profile");
+    }
+  }, [user, loading, navigate, from]);
 
   const toggleAll = (v: boolean) => {
     setAgreeAll(v);
@@ -48,10 +61,7 @@ const Login = () => {
       localStorage.setItem(CONSENT_KEY, "true");
       localStorage.setItem(
         "privacy_consent_meta",
-        JSON.stringify({
-          at: new Date().toISOString(),
-          marketing: agreeMarketing,
-        })
+        JSON.stringify({ at: new Date().toISOString(), marketing: agreeMarketing })
       );
     } catch {}
     setStep("sns");
@@ -63,9 +73,6 @@ const Login = () => {
     user?.birthdate ? user.birthdate.replace(/-/g, "") : ""
   );
 
-  const from = (location.state as any)?.from?.pathname ?? "/";
-
-  // Convert YYYYMMDD digits → YYYY-MM-DD; returns null if invalid
   const parseBirth = (digits: string): string | null => {
     if (!/^\d{8}$/.test(digits)) return null;
     const y = Number(digits.slice(0, 4));
@@ -86,24 +93,22 @@ const Login = () => {
     return iso ? calcAge(iso) : undefined;
   })();
 
-  const handleSnsLogin = async (provider: Provider) => {
-    setLoadingProvider(provider);
+  const handleGoogleLogin = async () => {
+    setOauthLoading("google");
     try {
-      const u = await login(provider);
-      toast.success(`${provider === "google" ? "Google" : "Instagram"} 계정 연결 완료 ✨`);
-      if (u.profileCompleted) {
-        navigate(from, { replace: true });
-      } else {
-        setStep("profile");
-      }
-    } catch {
-      toast.error("로그인에 실패했어요. 다시 시도해주세요.");
-    } finally {
-      setLoadingProvider(null);
+      await loginWithOAuth("google");
+      // 브라우저가 Google 로 리다이렉트 됨 → 콜백 후 listener 가 user 를 세팅
+    } catch (e: any) {
+      toast.error(e?.message ?? "Google 로그인에 실패했어요");
+      setOauthLoading(null);
     }
   };
 
-  const handleSubmitProfile = () => {
+  const handleInstagramLogin = () => {
+    toast.info("Instagram 로그인은 준비 중입니다. Google 로그인을 이용해주세요.");
+  };
+
+  const handleSubmitProfile = async () => {
     const trimmed = nickname.trim();
     if (!trimmed || trimmed.length > 20) {
       toast.error("닉네임은 1~20자로 입력해주세요");
@@ -119,13 +124,17 @@ const Login = () => {
       toast.error("올바른 생년월일 8자리를 입력해주세요 (YYYYMMDD)");
       return;
     }
-    updateProfile({
-      nickname: trimmed,
-      gender: gender as "male" | "female" | "other",
-      birthdate: iso,
-    });
-    toast.success(`환영합니다, ${trimmed}님 ✨`);
-    navigate(from, { replace: true });
+    try {
+      await updateProfile({
+        nickname: trimmed,
+        gender: gender as "male" | "female" | "other",
+        birthdate: iso,
+      });
+      toast.success(`환영합니다, ${trimmed}님 ✨`);
+      navigate(from, { replace: true });
+    } catch (e: any) {
+      toast.error(e?.message ?? "프로필 저장에 실패했어요");
+    }
   };
 
   return (
@@ -194,7 +203,7 @@ const Login = () => {
               <details className="text-xs text-muted-foreground bg-background/40 rounded-lg p-3 border border-border/40">
                 <summary className="cursor-pointer text-foreground/80">개인정보 수집·이용 안내 보기</summary>
                 <div className="mt-2 space-y-1 leading-relaxed">
-                  <p>• 수집 항목: SNS 계정 정보, 닉네임, 성별, 생년월일, 프로필 이미지(선택)</p>
+                  <p>• 수집 항목: SNS 계정 정보(이름, 이메일, 프로필 이미지), 닉네임, 성별, 생년월일</p>
                   <p>• 이용 목적: 회원 식별, 매칭 서비스 제공, 채팅 기능 운영</p>
                   <p>• 보유 기간: 회원 탈퇴 시까지 (관련 법령에 따라 일정 기간 보관 가능)</p>
                   <p>• 동의를 거부할 수 있으나, 거부 시 서비스 이용이 제한됩니다.</p>
@@ -222,8 +231,8 @@ const Login = () => {
               </p>
 
               <button
-                onClick={() => handleSnsLogin("google")}
-                disabled={loadingProvider !== null}
+                onClick={handleGoogleLogin}
+                disabled={oauthLoading !== null}
                 className="w-full h-12 rounded-lg bg-white text-gray-800 font-medium flex items-center justify-center gap-3 hover:shadow-lg transition-all disabled:opacity-60"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -232,32 +241,32 @@ const Login = () => {
                   <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.83z" />
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.83C6.71 7.31 9.14 5.38 12 5.38z" />
                 </svg>
-                {loadingProvider === "google" ? "연결 중..." : "Google로 계속하기"}
+                {oauthLoading === "google" ? "이동 중..." : "Google로 계속하기"}
               </button>
 
               <button
-                onClick={() => handleSnsLogin("instagram")}
-                disabled={loadingProvider !== null}
-                className="w-full h-12 rounded-lg text-white font-medium flex items-center justify-center gap-3 hover:shadow-[0_0_24px_rgba(236,72,153,0.4)] transition-all disabled:opacity-60"
+                onClick={handleInstagramLogin}
+                disabled={oauthLoading !== null}
+                className="w-full h-12 rounded-lg text-white font-medium flex items-center justify-center gap-3 hover:shadow-[0_0_24px_rgba(236,72,153,0.4)] transition-all disabled:opacity-60 relative"
                 style={{
                   background:
                     "linear-gradient(135deg, #7c3aed 0%, #ec4899 55%, #f97316 100%)",
                 }}
               >
                 <span className="text-lg">📸</span>
-                {loadingProvider === "instagram" ? "연결 중..." : "Instagram으로 계속하기"}
+                Instagram으로 계속하기
+                <span className="absolute top-1 right-2 text-[9px] bg-black/30 px-1.5 py-0.5 rounded">
+                  준비 중
+                </span>
               </button>
 
               <p className="text-[10px] text-center text-muted-foreground/80 leading-relaxed">
-                다음 단계에서 닉네임 · 성별 · 생년월일을 입력해주세요
+                Google 인증 페이지로 이동 → 동의 → 자동으로 돌아옵니다.
+                <br />
+                다음 단계에서 닉네임 · 성별 · 생년월일을 입력해주세요.
               </p>
 
-              <Button
-                variant="ethereal"
-                size="lg"
-                className="w-full"
-                onClick={() => navigate("/")}
-              >
+              <Button variant="ethereal" size="lg" className="w-full" onClick={() => navigate("/")}>
                 👣 둘러보기
               </Button>
             </>
@@ -265,7 +274,7 @@ const Login = () => {
             <div className="space-y-5">
               <div className="text-center -mt-2">
                 <p className="text-xs text-gold">
-                  {user?.provider === "google" ? "Google" : user?.provider === "instagram" ? "Instagram" : "SNS"} 연결 완료 ✓
+                  {user?.provider === "google" ? "Google" : "SNS"} 연결 완료 ✓
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-1">
                   서비스 이용을 위해 추가 정보를 입력해주세요
