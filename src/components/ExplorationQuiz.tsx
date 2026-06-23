@@ -137,6 +137,9 @@ export const ExplorationQuiz = () => {
   const quiz = location.quizzes[currentQuizIndex];
   if (!quiz) return null;
 
+  const targetLabel = quiz.target === "self" ? "나의 성향" : "이상형 탐색";
+  const targetColor = quiz.target === "self" ? "text-gold" : "text-mystic-purple";
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
@@ -150,7 +153,10 @@ export const ExplorationQuiz = () => {
         </div>
       </div>
 
-      <div className="text-center py-4">
+      <div className="text-center space-y-3 py-2">
+        <span className={cn("inline-block px-3 py-1 rounded-full text-[10px] tracking-[0.2em] uppercase border border-border/50 bg-card/40", targetColor)}>
+          {targetLabel}
+        </span>
         <p className="text-foreground text-lg leading-relaxed">{quiz.question}</p>
       </div>
 
@@ -178,7 +184,7 @@ export const ExplorationQuiz = () => {
             size="lg"
             onClick={() => {
               const choice = quiz.choices[selectedChoice];
-              answerQuiz(choice.trait, choice.response);
+              answerQuiz(choice.trait, choice.response, quiz.target);
               setSelectedChoice(null);
             }}
           >
