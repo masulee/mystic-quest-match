@@ -108,6 +108,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     unlockedLocations: [1],
     collectedItems: [],
     traitScores: { 감성: 0, 지혜: 0, 용기: 0, 신비: 0 },
+    idealTraitScores: { 감성: 0, 지혜: 0, 용기: 0, 신비: 0 },
+    doorChoice: null,
     quizAnswers: [],
     isQuizActive: false,
     showReward: false,
