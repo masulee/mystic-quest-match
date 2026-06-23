@@ -43,11 +43,14 @@ const lines: Record<Phase, string> = {
 
 const Intro = () => {
   const navigate = useNavigate();
+  const { recordDoorChoice } = useGame();
   const [phase, setPhase] = useState<Phase>("candle-1");
   const [textKey, setTextKey] = useState(0);
+  const [hoveredDoor, setHoveredDoor] = useState<number | null>(null);
 
   const isCandleScene = phase.startsWith("candle");
-  const isPawnshopScene = phase.startsWith("pawnshop") || phase.startsWith("npc");
+  const isPawnshopScene =
+    phase.startsWith("pawnshop") || phase.startsWith("npc") || phase.startsWith("door");
 
   useEffect(() => {
     // pawnshop-enter is a brief scene transition, auto-advance
@@ -69,6 +72,12 @@ const Intro = () => {
   };
 
   const acceptQuest = () => {
+    setPhase("door-intro");
+    setTextKey((k) => k + 1);
+  };
+
+  const pickDoor = (trait: PersonalityTrait) => {
+    recordDoorChoice(trait);
     navigate("/explore");
   };
 
