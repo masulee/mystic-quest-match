@@ -9,11 +9,11 @@ interface JourneyNode {
 }
 
 const journeyNodes: JourneyNode[] = [
-  { id: 1, name: "시작의 숲", icon: "🌲", unlocked: true },
+  { id: 1, name: "안개의 도서관", icon: "📚", unlocked: true },
   { id: 2, name: "달빛 호수", icon: "🌙", unlocked: true, current: true },
-  { id: 3, name: "별의 정원", icon: "✨", unlocked: false },
-  { id: 4, name: "운명의 사원", icon: "🏛️", unlocked: false },
-  { id: 5, name: "인연의 다리", icon: "🌉", unlocked: false },
+  { id: 3, name: "폭풍의 탑", icon: "🗼", unlocked: false },
+  { id: 4, name: "붉은 시장", icon: "🏮", unlocked: false },
+  { id: 5, name: "침묵의 정원", icon: "🌿", unlocked: false },
 ];
 
 export const JourneyPath = () => {

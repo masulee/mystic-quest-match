@@ -1,5 +1,5 @@
 import { useGame } from "@/contexts/GameContext";
-import { personalityDescriptions, PersonalityTrait } from "@/lib/gameData";
+import { idealDescriptions, personalityDescriptions, PersonalityTrait } from "@/lib/gameData";
 import { cn } from "@/lib/utils";
 
 const traitColors: Record<PersonalityTrait, string> = {
@@ -9,52 +9,85 @@ const traitColors: Record<PersonalityTrait, string> = {
   신비: "bg-purple-500",
 };
 
-export const PersonalityProfile = () => {
-  const { traitScores, collectedItems } = useGame();
-
-  const total = Object.values(traitScores).reduce((a, b) => a + b, 0);
+const TraitBars = ({ scores }: { scores: Record<PersonalityTrait, number> }) => {
+  const total = Object.values(scores).reduce((a, b) => a + b, 0);
   if (total === 0) return null;
-
-  const sorted = Object.entries(traitScores)
+  const sorted = (Object.entries(scores) as [PersonalityTrait, number][])
     .filter(([, v]) => v > 0)
-    .sort((a, b) => b[1] - a[1]) as [PersonalityTrait, number][];
+    .sort((a, b) => b[1] - a[1]);
+  return (
+    <div className="space-y-3">
+      {sorted.map(([trait, score]) => (
+        <div key={trait} className="space-y-1">
+          <div className="flex justify-between text-xs">
+            <span className="text-foreground/80">{trait}</span>
+            <span className="text-muted-foreground">{Math.round((score / total) * 100)}%</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
+            <div
+              className={cn("h-full rounded-full transition-all duration-700", traitColors[trait])}
+              style={{ width: `${(score / total) * 100}%` }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
-  const dominant = sorted[0]?.[0];
-  if (!dominant) return null;
+export const PersonalityProfile = () => {
+  const { traitScores, idealTraitScores, collectedItems } = useGame();
 
-  const personality = personalityDescriptions[dominant];
+  const selfTotal = Object.values(traitScores).reduce((a, b) => a + b, 0);
+  const idealTotal = Object.values(idealTraitScores).reduce((a, b) => a + b, 0);
+  if (selfTotal === 0 && idealTotal === 0) return null;
+
+  const selfSorted = (Object.entries(traitScores) as [PersonalityTrait, number][])
+    .sort((a, b) => b[1] - a[1]);
+  const idealSorted = (Object.entries(idealTraitScores) as [PersonalityTrait, number][])
+    .sort((a, b) => b[1] - a[1]);
+
+  const dominantSelf = selfSorted[0]?.[1] > 0 ? selfSorted[0][0] : null;
+  const dominantIdeal = idealSorted[0]?.[1] > 0 ? idealSorted[0][0] : null;
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h3 className="font-display text-xl text-foreground">나의 성향 프로필</h3>
-        <p className={cn("font-display text-lg bg-gradient-to-r bg-clip-text text-transparent", personality.color)}>
-          {personality.title}
-        </p>
-        <p className="text-sm text-muted-foreground max-w-sm mx-auto">{personality.description}</p>
-      </div>
-
-      {/* Trait bars */}
-      <div className="space-y-3">
-        {sorted.map(([trait, score]) => (
-          <div key={trait} className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-foreground/80">{trait}</span>
-              <span className="text-muted-foreground">{Math.round((score / total) * 100)}%</span>
-            </div>
-            <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
-              <div
-                className={cn("h-full rounded-full transition-all duration-700", traitColors[trait])}
-                style={{ width: `${(score / total) * 100}%` }}
-              />
-            </div>
+    <div className="space-y-8">
+      {dominantSelf && (
+        <div className="space-y-4">
+          <div className="text-center space-y-2">
+            <span className="inline-block px-3 py-1 rounded-full text-[10px] tracking-[0.3em] uppercase border border-gold/40 text-gold bg-card/40">
+              나의 성향
+            </span>
+            <p className={cn("font-display text-lg bg-gradient-to-r bg-clip-text text-transparent", personalityDescriptions[dominantSelf].color)}>
+              {personalityDescriptions[dominantSelf].title}
+            </p>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+              {personalityDescriptions[dominantSelf].description}
+            </p>
           </div>
-        ))}
-      </div>
+          <TraitBars scores={traitScores} />
+        </div>
+      )}
 
-      {/* Collected items */}
+      {dominantIdeal && (
+        <div className="space-y-4 pt-4 border-t border-border/30">
+          <div className="text-center space-y-2">
+            <span className="inline-block px-3 py-1 rounded-full text-[10px] tracking-[0.3em] uppercase border border-mystic-purple/40 text-mystic-purple bg-card/40">
+              이상형 성향
+            </span>
+            <p className="font-display text-lg text-foreground">
+              {idealDescriptions[dominantIdeal].title}
+            </p>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+              {idealDescriptions[dominantIdeal].description}
+            </p>
+          </div>
+          <TraitBars scores={idealTraitScores} />
+        </div>
+      )}
+
       {collectedItems.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-3 pt-4 border-t border-border/30">
           <p className="text-xs text-muted-foreground">수집한 아이템 ({collectedItems.length}/5)</p>
           <div className="flex flex-wrap gap-3 justify-center">
             {collectedItems.map((item, i) => (

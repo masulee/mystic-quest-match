@@ -2,10 +2,22 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StarField } from "@/components/StarField";
+import { useGame } from "@/contexts/GameContext";
+import { doorChoices, PersonalityTrait } from "@/lib/gameData";
+import { cn } from "@/lib/utils";
 import candleImg from "@/assets/intro-candle.jpg";
 import pawnshopImg from "@/assets/intro-pawnshop.jpg";
 
-type Phase = "candle-1" | "candle-2" | "candle-3" | "pawnshop-enter" | "npc-1" | "npc-2" | "npc-quest";
+type Phase =
+  | "candle-1"
+  | "candle-2"
+  | "candle-3"
+  | "pawnshop-enter"
+  | "npc-1"
+  | "npc-2"
+  | "npc-quest"
+  | "door-intro"
+  | "door-choice";
 
 const phaseOrder: Phase[] = [
   "candle-1",
@@ -25,15 +37,20 @@ const lines: Record<Phase, string> = {
   "npc-1": "어서 오시게. 자네의 눈빛에서 무언가를 간절히 찾고 있는 듯한 기운이 느껴지는군.",
   "npc-2": "내 오랜 친구가 간직했던 '빛바랜 편지' 한 통을 찾아다 주면, 자네의 여정에 작은 도움이 될 '반쪽 아이템'을 내어주겠네.",
   "npc-quest": "",
+  "door-intro": "\"첫 번째 선택이오. 어느 문을 열든, 당신이 선택한 것이 당신을 말해줄 것입니다.\"",
+  "door-choice": "",
 };
 
 const Intro = () => {
   const navigate = useNavigate();
+  const { recordDoorChoice } = useGame();
   const [phase, setPhase] = useState<Phase>("candle-1");
   const [textKey, setTextKey] = useState(0);
+  const [hoveredDoor, setHoveredDoor] = useState<number | null>(null);
 
   const isCandleScene = phase.startsWith("candle");
-  const isPawnshopScene = phase.startsWith("pawnshop") || phase.startsWith("npc");
+  const isPawnshopScene =
+    phase.startsWith("pawnshop") || phase.startsWith("npc") || phase.startsWith("door");
 
   useEffect(() => {
     // pawnshop-enter is a brief scene transition, auto-advance
@@ -55,6 +72,12 @@ const Intro = () => {
   };
 
   const acceptQuest = () => {
+    setPhase("door-intro");
+    setTextKey((k) => k + 1);
+  };
+
+  const pickDoor = (trait: PersonalityTrait) => {
+    recordDoorChoice(trait);
     navigate("/explore");
   };
 
@@ -147,6 +170,53 @@ const Intro = () => {
                   </Button>
                 </div>
               </div>
+            ) : phase === "door-choice" ? (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <span className="inline-block px-3 py-1 rounded-full text-[10px] tracking-[0.3em] uppercase border border-gold/40 text-gold bg-card/60">
+                    나의 성향
+                  </span>
+                  <h2 className="font-display text-xl md:text-2xl text-foreground drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]">
+                    전당포를 나서는 문.<br />당신은 어느 쪽을 엽니까?
+                  </h2>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3 text-left">
+                  {doorChoices.map((door, i) => (
+                    <button
+                      key={i}
+                      onClick={() => pickDoor(door.trait)}
+                      onMouseEnter={() => setHoveredDoor(i)}
+                      onMouseLeave={() => setHoveredDoor(null)}
+                      className={cn(
+                        "p-4 rounded-xl border transition-all duration-300 bg-card/70 backdrop-blur-sm",
+                        hoveredDoor === i
+                          ? "border-gold shadow-[0_0_24px_hsl(38_92%_60%/0.35)] -translate-y-0.5"
+                          : "border-border/50 hover:border-gold/60",
+                      )}
+                    >
+                      <p className="font-display text-base text-foreground">🚪 {door.text}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{door.hint}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : phase === "door-intro" ? (
+              <>
+                <div className="inline-block px-4 py-1 rounded-full bg-card/80 backdrop-blur-sm border border-gold/30">
+                  <span className="font-display text-sm text-gold tracking-widest">
+                    전당포 주인
+                  </span>
+                </div>
+                <p className="font-display text-xl md:text-3xl text-foreground leading-relaxed drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]">
+                  {lines[phase]}
+                </p>
+                <button
+                  onClick={() => { setPhase("door-choice"); setTextKey((k) => k + 1); }}
+                  className="text-xs text-gold/70 hover:text-gold transition-colors tracking-[0.3em] uppercase animate-pulse"
+                >
+                  ▾ 문 앞에 서기 ▾
+                </button>
+              </>
             ) : (
               <>
                 <p className="font-display text-xl md:text-3xl text-foreground leading-relaxed drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]">
