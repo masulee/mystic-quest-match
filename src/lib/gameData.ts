@@ -1,5 +1,7 @@
 export type PersonalityTrait = "감성" | "지혜" | "용기" | "신비";
 
+export type QuizTarget = "self" | "ideal";
+
 export interface Choice {
   text: string;
   trait: PersonalityTrait;
@@ -8,6 +10,7 @@ export interface Choice {
 
 export interface Quiz {
   question: string;
+  target: QuizTarget; // "self" = 나의 성향, "ideal" = 이상형 성향
   choices: Choice[];
 }
 
@@ -29,162 +32,210 @@ export interface GameLocation {
   rewards: LocationReward[];
 }
 
+// Pre-quest door choice (records to 나의 성향)
+export interface DoorChoice {
+  text: string;
+  hint: string;
+  trait: PersonalityTrait;
+}
+
+export const doorChoices: DoorChoice[] = [
+  { text: "아침 빛이 새어 들어오는 문", hint: "문틈 사이로 이슬 냄새가 납니다", trait: "감성" },
+  { text: "빗소리가 들리는 문", hint: "조용하지만 쉬지 않는 리듬이 있습니다", trait: "지혜" },
+  { text: "아무것도 보이지 않는 문", hint: "그 안이 어딘지 전혀 알 수 없습니다", trait: "신비" },
+  { text: "웅성임이 들려오는 문", hint: "누군가의 웃음소리가 섞여 있습니다", trait: "용기" },
+];
+
+// Helper: build a single-item reward set so the chosen item is the same regardless of trait.
+const sameReward = (
+  itemName: string,
+  icon: string,
+  rarity: "common" | "rare" | "legendary",
+  description: string,
+): LocationReward[] =>
+  (["감성", "지혜", "용기", "신비"] as PersonalityTrait[]).map((trait) => ({
+    trait,
+    itemName,
+    icon,
+    rarity,
+    description,
+  }));
+
 export const gameLocations: GameLocation[] = [
   {
     id: 1,
-    name: "시작의 숲",
-    icon: "🌲",
-    description: "고요한 숲 속에서 첫 번째 인연의 조각을 찾아보세요. 나무들이 속삭이는 이야기에 귀를 기울여보세요.",
-    backgroundEmoji: "🌿",
+    name: "안개의 도서관",
+    icon: "📚",
+    description: "기억이 책이 되는 곳. 끝없이 이어진 서가에는 제목 없는 책들이 놓여 있고, 안개가 낮게 깔려 있습니다.",
+    backgroundEmoji: "🌫️",
     quizzes: [
       {
-        question: "숲 속 갈림길에서 신비한 빛이 두 방향으로 갈라집니다. 어디로 향하시겠어요?",
+        target: "ideal",
+        question: "당신 앞에 펼쳐진 책 — 표지도 제목도 없습니다. 첫 페이지에 적힌 것은 무엇입니까?",
         choices: [
-          { text: "달빛이 비추는 조용한 연못 쪽으로", trait: "감성", response: "연못의 수면이 당신의 마음을 비춥니다..." },
-          { text: "고대 문자가 새겨진 돌기둥 쪽으로", trait: "지혜", response: "문자들이 서서히 빛나며 비밀을 속삭입니다..." },
-          { text: "어둠 속에서 빛나는 동굴 쪽으로", trait: "용기", response: "동굴 깊은 곳에서 따뜻한 기운이 느껴집니다..." },
-          { text: "안개가 자욱한 꽃밭 쪽으로", trait: "신비", response: "안개 속 꽃들이 당신을 위해 피어납니다..." },
+          { text: "낯선 사람의 꿈 일기 — 가장 깊은 밤이 고스란히 담겨 있습니다", trait: "감성", response: "페이지에서 누군가의 숨소리가 들려옵니다…" },
+          { text: "아직 일어나지 않은 일들의 기록 — 미래가 이미 쓰여져 있는 것처럼", trait: "신비", response: "글자가 천천히 움직이며 다시 쓰여집니다…" },
+          { text: "빈 페이지 — 무엇이든 쓸 수 있는, 아직 아무것도 없는", trait: "용기", response: "백지가 당신의 손끝을 기다립니다…" },
+          { text: "두 사람이 번갈아 쓴 일기 — 한 쪽은 낯선 필체, 한 쪽은 내 것 같은 느낌", trait: "지혜", response: "두 필체가 한 줄에서 만납니다…" },
         ],
       },
       {
-        question: "숲의 정령이 나타나 질문합니다. \"당신이 가장 소중하게 여기는 것은?\"",
+        target: "self",
+        question: "서가 한쪽에 당신의 이름이 적힌 빈 책이 있습니다. 당신은 이 책에 무엇을 씁니까?",
         choices: [
-          { text: "함께하는 사람들과의 따뜻한 순간", trait: "감성", response: "정령이 미소지으며 따뜻한 빛을 건넵니다..." },
-          { text: "세상의 진리를 깨닫는 순간", trait: "지혜", response: "정령이 고개를 끄덕이며 지혜의 빛을 나눕니다..." },
-          { text: "두려움을 극복하고 성장하는 순간", trait: "용기", response: "정령이 감탄하며 용기의 불꽃을 선물합니다..." },
-          { text: "설명할 수 없는 신비한 경험", trait: "신비", response: "정령이 신비롭게 웃으며 별빛을 뿌립니다..." },
+          { text: "오늘 본 것들 — 사람, 빛, 풍경 / 기록하지 않으면 사라질 것들을 붙잡습니다", trait: "지혜", response: "관찰의 문장들이 또렷이 새겨집니다…" },
+          { text: "오늘 느낀 것들 — 감정의 흐름 / 사실보다 감각이 더 진실하다고 생각합니다", trait: "감성", response: "감정의 결이 페이지에 번져갑니다…" },
+          { text: "아직 답 못 한 질문들 — 모르는 것을 모른다고 인정하는 사람입니다", trait: "신비", response: "질문들이 안개 속에서 빛을 냅니다…" },
+          { text: "아무것도 쓰지 않습니다 — 기록보다 경험이 먼저인 사람입니다", trait: "용기", response: "당신은 책을 덮고 다시 걸음을 옮깁니다…" },
         ],
       },
     ],
-    rewards: [
-      { trait: "감성", itemName: "눈물방울 꽃잎", icon: "🌸", rarity: "common", description: "순수한 감성을 담은 반쪽 꽃잎" },
-      { trait: "지혜", itemName: "지혜의 나뭇잎", icon: "🍃", rarity: "common", description: "고대의 지혜가 깃든 반쪽 나뭇잎" },
-      { trait: "용기", itemName: "용기의 도토리", icon: "🌰", rarity: "common", description: "단단한 용기가 담긴 반쪽 도토리" },
-      { trait: "신비", itemName: "신비의 버섯", icon: "🍄", rarity: "rare", description: "신비한 기운이 깃든 반쪽 버섯" },
-    ],
+    rewards: sameReward(
+      "안개 깃털 펜",
+      "🪶",
+      "common",
+      "이 펜으로 쓴 것은 안개 속에서도 지워지지 않습니다. 당신이 찾는 이상형은 당신만의 언어를 이해하는 사람일 것입니다.",
+    ),
   },
   {
     id: 2,
     name: "달빛 호수",
     icon: "🌙",
-    description: "은빛 달빛이 호수 위에 춤을 춥니다. 물 위에 비친 별들 사이에서 운명의 조각을 찾아보세요.",
+    description: "반영만이 진실을 말하는 곳. 달이 수면 가득 비치고, 발밑의 물은 파문 없이 고요합니다.",
     backgroundEmoji: "🌊",
     quizzes: [
       {
-        question: "달빛 호수 위에 신비한 배가 나타났습니다. 배 위에서 무엇을 하시겠어요?",
+        target: "ideal",
+        question: "호수 표면에 당신 옆에 서 있는 그림자가 비칩니다. 그 그림자는 무엇을 하고 있습니까?",
         choices: [
-          { text: "물 위에 비친 달을 바라보며 노래를 부른다", trait: "감성", response: "당신의 노래가 호수 전체에 울려퍼집니다..." },
-          { text: "물속에 비친 별자리의 의미를 해석한다", trait: "지혜", response: "별자리가 당신에게 비밀 메시지를 전합니다..." },
-          { text: "깊은 물속으로 뛰어든다", trait: "용기", response: "물속에서 빛나는 세계가 펼쳐집니다..." },
-          { text: "물 위를 걸어보려 한다", trait: "신비", response: "놀랍게도, 당신의 발 아래 물이 단단해집니다..." },
+          { text: "당신보다 먼저 돌아보며 살피고 있습니다 — 언제나 한 발 앞서 챙기는 사람", trait: "감성", response: "그림자의 시선이 당신에게 닿습니다…" },
+          { text: "같은 방향을 바라보고 있습니다 — 나란히 같은 것을 보는 존재", trait: "지혜", response: "두 그림자의 윤곽이 하나로 겹쳐집니다…" },
+          { text: "당신의 손을 잡고 있습니다 — 말 없이도 연결되어 있는 존재", trait: "신비", response: "수면 위 두 손에 잔물결이 입니다…" },
+          { text: "자신만의 세계에 빠져 있습니다 — 각자의 빛이 있고, 그래서 더 끌리는 존재", trait: "용기", response: "그림자가 홀로 빛을 발합니다…" },
         ],
       },
       {
-        question: "호수의 수호자가 묻습니다. \"인연이란 무엇이라 생각하나요?\"",
+        target: "self",
+        question: "달빛을 받으며 혼자 서 있는 지금 이 순간, 당신은 무엇을 느낍니까?",
         choices: [
-          { text: "서로의 마음이 자연스럽게 이어지는 것", trait: "감성", response: "호수가 잔잔한 파문으로 공감합니다..." },
-          { text: "시간과 경험이 만들어내는 깊은 유대", trait: "지혜", response: "수호자가 깊이 고개를 끄덕입니다..." },
-          { text: "어떤 시련도 함께 이겨내는 힘", trait: "용기", response: "호수의 파도가 힘차게 일렁입니다..." },
-          { text: "우주가 정해놓은 불가사의한 운명", trait: "신비", response: "달빛이 더욱 밝게 빛납니다..." },
+          { text: "고요하고 충만합니다 — 혼자여도 외롭지 않은 사람입니다", trait: "지혜", response: "마음이 호수처럼 잔잔해집니다…" },
+          { text: "누군가가 있었으면 합니다 — 연결을 통해 완성되는 사람입니다", trait: "감성", response: "달빛이 당신의 어깨를 가만히 감쌉니다…" },
+          { text: "생각이 오히려 선명해집니다 — 고독이 사고를 날카롭게 만드는 사람입니다", trait: "신비", response: "수면에 떠오른 별자리가 또렷해집니다…" },
+          { text: "빨리 이곳을 벗어나고 싶습니다 — 움직임 속에서 살아있음을 느끼는 사람입니다", trait: "용기", response: "당신의 발이 이미 다음 길을 향합니다…" },
         ],
       },
     ],
-    rewards: [
-      { trait: "감성", itemName: "달빛 조개", icon: "🐚", rarity: "rare", description: "달빛을 품은 반쪽 조개" },
-      { trait: "지혜", itemName: "별의 나침반", icon: "🧭", rarity: "rare", description: "진실을 가리키는 반쪽 나침반" },
-      { trait: "용기", itemName: "파도의 검", icon: "⚔️", rarity: "rare", description: "파도의 힘이 깃든 반쪽 검" },
-      { trait: "신비", itemName: "달빛 열쇠", icon: "🔑", rarity: "legendary", description: "운명의 문을 여는 반쪽 열쇠" },
-    ],
+    rewards: sameReward(
+      "달빛 물방울",
+      "💧",
+      "rare",
+      "손 위에 올리면 잠시 다른 사람의 감정이 느껴집니다. 당신이 찾는 이상형은 감정의 결이 비슷한 사람일 것입니다.",
+    ),
   },
   {
     id: 3,
-    name: "별의 정원",
-    icon: "✨",
-    description: "하늘에서 떨어진 별들이 꽃이 되어 피어난 정원. 각 별꽃은 다른 운명을 품고 있습니다.",
-    backgroundEmoji: "🌟",
+    name: "폭풍의 탑",
+    icon: "🗼",
+    description: "가장 높은 곳이 가장 위험한 곳. 올라갈수록 바람이 거세지고, 꼭대기에서는 폭풍이 몰아칩니다.",
+    backgroundEmoji: "⛈️",
     quizzes: [
       {
-        question: "별의 정원에서 네 개의 별꽃이 동시에 피어났습니다. 어떤 꽃에 끌리시나요?",
+        target: "ideal",
+        question: "폭풍 속 탑 꼭대기에서 그 사람은 어떻게 합니까?",
         choices: [
-          { text: "부드러운 분홍빛으로 따뜻하게 빛나는 꽃", trait: "감성", response: "꽃이 당신의 손에서 더 환하게 피어납니다..." },
-          { text: "깊은 파란빛으로 고요하게 빛나는 꽃", trait: "지혜", response: "꽃잎에서 우주의 지식이 흘러나옵니다..." },
-          { text: "강렬한 붉은빛으로 활활 타오르는 꽃", trait: "용기", response: "꽃의 불꽃이 당신의 영혼에 힘을 줍니다..." },
-          { text: "무지갯빛으로 계속 변하는 꽃", trait: "신비", response: "꽃이 수천 가지 색으로 당신을 감쌉니다..." },
+          { text: "말없이 난간을 함께 붙잡습니다 — 쓰러질 것 같은 순간, 함께 버티는 사람", trait: "감성", response: "두 손이 같은 차가운 난간 위에 포개집니다…" },
+          { text: "당신 앞에 서서 바람을 막습니다 — 자신을 내어주는 사람", trait: "용기", response: "그 사람의 등이 폭풍을 막아냅니다…" },
+          { text: "폭풍이 아름답다고 말합니다 — 두려움을 경이로 바꾸는 사람", trait: "신비", response: "번개가 그 사람의 눈동자에 비칩니다…" },
+          { text: "먼저 내려가자고 손을 잡아당깁니다 — 용기보다 안전을 택할 줄 아는 사람", trait: "지혜", response: "잡힌 손에서 따뜻한 결단이 전해집니다…" },
         ],
       },
       {
-        question: "정원의 별 수호자가 시험합니다. \"이 정원이 시들어가고 있어요. 어떻게 하시겠어요?\"",
+        target: "self",
+        question: "폭풍이 지나간 탑 꼭대기, 당신은 무엇을 합니까?",
         choices: [
-          { text: "꽃들에게 따뜻한 마음으로 노래를 불러준다", trait: "감성", response: "당신의 마음이 정원 전체를 감싸 안습니다..." },
-          { text: "시드는 원인을 분석하고 해결책을 찾는다", trait: "지혜", response: "당신의 통찰력이 정원의 비밀을 밝힙니다..." },
-          { text: "어둠의 근원을 찾아 직접 맞선다", trait: "용기", response: "당신의 용기가 어둠을 물리칩니다..." },
-          { text: "별에게 소원을 빌어 기적을 바란다", trait: "신비", response: "기적처럼 별빛이 쏟아져 내립니다..." },
+          { text: "잠시 눈을 감고 숨을 고릅니다 — 내면으로 돌아오는 사람입니다", trait: "감성", response: "심장의 박동이 천천히 가라앉습니다…" },
+          { text: "사방을 바라보며 왔던 길을 확인합니다 — 전체를 보려는 사람입니다", trait: "지혜", response: "지나온 길이 한눈에 들어옵니다…" },
+          { text: "이 순간을 기억하려 애씁니다 — 경험을 수집하는 사람입니다", trait: "신비", response: "바람의 결이 마음에 새겨집니다…" },
+          { text: "다음 장소를 찾아봅니다 — 머무르기보다 나아가는 사람입니다", trait: "용기", response: "이미 다음 길이 시야에 들어옵니다…" },
         ],
       },
     ],
-    rewards: [
-      { trait: "감성", itemName: "사랑의 별꽃", icon: "💮", rarity: "rare", description: "사랑의 기운이 담긴 반쪽 별꽃" },
-      { trait: "지혜", itemName: "지식의 수정구", icon: "🔮", rarity: "legendary", description: "모든 것을 비추는 반쪽 수정구" },
-      { trait: "용기", itemName: "전사의 별", icon: "💫", rarity: "rare", description: "전사의 영혼이 깃든 반쪽 별" },
-      { trait: "신비", itemName: "무한의 거울", icon: "🪞", rarity: "legendary", description: "무한한 가능성을 비추는 반쪽 거울" },
-    ],
+    rewards: sameReward(
+      "폭풍 속 깃털",
+      "🪶",
+      "rare",
+      "아무리 강한 바람에도 날아가지 않는 깃털. 당신이 찾는 이상형은 어려운 순간에 당신 곁에 남아 있는 사람일 것입니다.",
+    ),
   },
   {
     id: 4,
-    name: "운명의 사원",
-    icon: "🏛️",
-    description: "시간이 멈춘 고대 사원. 이곳에서 당신의 진정한 모습과 마주하게 됩니다.",
-    backgroundEmoji: "🕯️",
+    name: "붉은 시장",
+    icon: "🏮",
+    description: "이름 없는 것들이 거래되는 곳. 여기서 거래되는 것은 물건이 아닙니다 — 가장 진귀한 물건은 기억으로만 살 수 있습니다.",
+    backgroundEmoji: "🔥",
     quizzes: [
       {
-        question: "사원의 네 개의 문 중 하나를 선택해야 합니다. 각 문 위에 다른 문양이 있습니다.",
+        target: "self",
+        question: "상인이 요구합니다 — 가장 소중한 기억 하나를 내놓으라고. 당신이 내놓는 기억은?",
         choices: [
-          { text: "하트 문양 - 사랑의 문", trait: "감성", response: "문이 열리며 따뜻한 빛이 쏟아집니다..." },
-          { text: "눈 문양 - 통찰의 문", trait: "지혜", response: "문 너머로 모든 것이 선명하게 보입니다..." },
-          { text: "칼 문양 - 시련의 문", trait: "용기", response: "시련의 길이 당신을 더 강하게 만듭니다..." },
-          { text: "달 문양 - 신비의 문", trait: "신비", response: "시간과 공간이 뒤틀리며 새로운 차원이 열립니다..." },
+          { text: "가장 행복했던 하루 — 그 온기를 다시 느끼고 싶은 기억", trait: "감성", response: "내려놓은 기억에서 따뜻한 빛이 새어 나옵니다…" },
+          { text: "처음으로 완전히 혼자였던 밤 — 외로움과 자유가 공존했던 기억", trait: "신비", response: "그 밤의 공기가 잠시 시장에 머뭅니다…" },
+          { text: "무언가를 처음 해낸 순간 — 스스로가 달라 보였던 기억", trait: "용기", response: "기억이 작은 불꽃처럼 타오릅니다…" },
+          { text: "아직 결말이 없는 이야기 — 자꾸 떠오르는, 끝나지 않은 기억", trait: "지혜", response: "상인이 이 기억을 오래 들여다봅니다…" },
         ],
       },
       {
-        question: "사원 깊은 곳에서 거울이 당신의 미래를 보여줍니다. 어떤 미래를 선택하시겠어요?",
+        target: "ideal",
+        question: "상인이 내민 물건이 있습니다. 당신이 집어드는 것은?",
         choices: [
-          { text: "사랑하는 사람과 함께 웃고 있는 모습", trait: "감성", response: "거울 속 당신이 행복하게 미소짓습니다..." },
-          { text: "큰 깨달음을 얻고 세상을 이해하는 모습", trait: "지혜", response: "거울이 무한한 지식의 빛을 비춥니다..." },
-          { text: "모든 어려움을 극복하고 우뚝 선 모습", trait: "용기", response: "거울 속 당신이 당당히 서 있습니다..." },
-          { text: "설명할 수 없는 신비한 힘을 가진 모습", trait: "신비", response: "거울이 산산조각나며 새로운 힘이 깨어납니다..." },
+          { text: "방향 없는 나침반 — 어디든 원하는 곳을 가리킵니다", trait: "용기", response: "바늘이 당신의 손끝을 따라 돕니다…" },
+          { text: "자물쇠 없는 열쇠 — 어떤 문이든 열린다고 합니다", trait: "지혜", response: "열쇠가 손바닥 위에서 가벼이 빛납니다…" },
+          { text: "뒷면이 없는 거울 — 자신이 아닌 상대방만 비칩니다", trait: "감성", response: "거울 속에 낯선 얼굴이 비칩니다…" },
+          { text: "모래가 거꾸로 흐르는 모래시계 — 시간이 느려지는 것처럼 느껴집니다", trait: "신비", response: "시간이 한순간 멈춥니다…" },
         ],
       },
     ],
-    rewards: [
-      { trait: "감성", itemName: "사랑의 성배", icon: "🏆", rarity: "legendary", description: "영원한 사랑이 담긴 반쪽 성배" },
-      { trait: "지혜", itemName: "현자의 두루마리", icon: "📜", rarity: "legendary", description: "궁극의 지혜가 적힌 반쪽 두루마리" },
-      { trait: "용기", itemName: "불사조의 깃털", icon: "🪶", rarity: "legendary", description: "불사의 용기가 깃든 반쪽 깃털" },
-      { trait: "신비", itemName: "차원의 오브", icon: "🌀", rarity: "legendary", description: "차원을 넘나드는 반쪽 오브" },
-    ],
+    rewards: sameReward(
+      "기억의 동전",
+      "🪙",
+      "rare",
+      "아무것도 새겨져 있지 않지만, 빛에 비추면 당신의 얼굴이 보입니다. 당신이 찾는 이상형은 당신이 소중히 여기는 것을 함께 소중히 여길 사람일 것입니다.",
+    ),
   },
   {
     id: 5,
-    name: "인연의 다리",
-    icon: "🌉",
-    description: "모든 여정의 끝, 인연의 다리에서 운명의 상대를 만나게 됩니다.",
-    backgroundEmoji: "🌈",
+    name: "침묵의 정원",
+    icon: "🌿",
+    description: "말하지 않아도 들리는 곳. 정원 한가운데 의자 두 개가 놓여 있고, 당신이 먼저 앉아 기다립니다.",
+    backgroundEmoji: "🌸",
     quizzes: [
       {
-        question: "인연의 다리 위에서 당신의 반쪽 아이템들이 빛나기 시작합니다. 마지막 질문입니다. 당신에게 사랑이란?",
+        target: "ideal",
+        question: "오랜 침묵 끝에, 그 사람이 처음 꺼내는 말은?",
         choices: [
-          { text: "말하지 않아도 서로 느끼는 따뜻한 마음", trait: "감성", response: "다리 전체가 따뜻한 빛으로 물듭니다..." },
-          { text: "서로를 깊이 이해하고 존중하는 관계", trait: "지혜", response: "다리의 문양들이 의미를 드러냅니다..." },
-          { text: "함께라면 어떤 것도 두렵지 않은 힘", trait: "용기", response: "다리가 흔들려도 당신은 굳건합니다..." },
-          { text: "우주가 선물한 기적 같은 만남", trait: "신비", response: "하늘에서 별이 쏟아져 내립니다..." },
+          { text: "\"배고프지 않아?\" — 일상의 온기로 먼저 다가오는 사람", trait: "감성", response: "그 한마디가 마음의 빗장을 풉니다…" },
+          { text: "\"오늘 어땠어?\" — 당신의 하루를 가장 먼저 궁금해하는 사람", trait: "지혜", response: "그 사람의 눈빛이 당신의 하루로 향합니다…" },
+          { text: "아무 말도 없이 당신 손 위에 손을 얹습니다 — 말 없이도 전달되는 사람", trait: "신비", response: "손끝에서 모든 말이 전해집니다…" },
+          { text: "\"나 좀 이상한 생각 해도 돼?\" — 자신의 내면을 당신에게 열어주는 사람", trait: "용기", response: "그 사람의 진심이 정원에 내려앉습니다…" },
+        ],
+      },
+      {
+        target: "self",
+        question: "이 여정이 끝나고 전당포로 돌아간다면, 노인에게 뭐라고 말하겠습니까?",
+        choices: [
+          { text: "\"찾은 것 같습니다\" — 확신보다 감각으로 아는 사람입니다", trait: "감성", response: "당신의 목소리에 따뜻한 확신이 묻어납니다…" },
+          { text: "\"더 보고 싶습니다\" — 탐색 자체를 즐기는 사람입니다", trait: "용기", response: "당신의 눈빛이 아직 길 위에 있습니다…" },
+          { text: "\"이미 알고 있었는지도 모르겠습니다\" — 직관을 신뢰하는 사람입니다", trait: "신비", response: "노인이 조용히 미소짓습니다…" },
+          { text: "\"아직 모르겠습니다\" — 열린 마음으로 기다릴 줄 아는 사람입니다", trait: "지혜", response: "그 침묵이 가장 솔직한 대답이 됩니다…" },
         ],
       },
     ],
-    rewards: [
-      { trait: "감성", itemName: "인연의 붉은 실", icon: "🧵", rarity: "legendary", description: "운명을 잇는 반쪽 붉은 실" },
-      { trait: "지혜", itemName: "인연의 별자리", icon: "⭐", rarity: "legendary", description: "운명이 새겨진 반쪽 별자리" },
-      { trait: "용기", itemName: "인연의 방패", icon: "🛡️", rarity: "legendary", description: "사랑을 지키는 반쪽 방패" },
-      { trait: "신비", itemName: "인연의 수정", icon: "💎", rarity: "legendary", description: "운명을 비추는 반쪽 수정" },
-    ],
+    rewards: sameReward(
+      "침묵의 씨앗",
+      "🌱",
+      "legendary",
+      "심으면 무엇이 자라는지 아무도 모릅니다. 돌보는 사람에게만 꽃이 핀다고 합니다. 당신이 찾는 이상형은 곁에 있는 것만으로 충분한 사람일 것입니다.",
+    ),
   },
 ];
 
@@ -208,5 +259,24 @@ export const personalityDescriptions: Record<PersonalityTrait, { title: string; 
     title: "신비로운 몽상가",
     description: "평범함을 넘어서는 특별한 감각의 소유자. 운명적인 만남을 직감으로 알아차릴 수 있는 사람입니다.",
     color: "from-purple-400 to-violet-500",
+  },
+};
+
+export const idealDescriptions: Record<PersonalityTrait, { title: string; description: string }> = {
+  감성: {
+    title: "마음을 먼저 건네는 사람",
+    description: "당신이 찾는 이상형은 따뜻함과 공감으로 먼저 손을 내미는 사람입니다.",
+  },
+  지혜: {
+    title: "나란히 같은 곳을 보는 사람",
+    description: "당신이 찾는 이상형은 깊이 이해하고 함께 길을 가늠하는 사람입니다.",
+  },
+  용기: {
+    title: "당신 앞을 막아서는 사람",
+    description: "당신이 찾는 이상형은 결정적인 순간에 자신을 내어줄 줄 아는 사람입니다.",
+  },
+  신비: {
+    title: "말 없이도 닿아 있는 사람",
+    description: "당신이 찾는 이상형은 침묵 속에서도 당신과 연결되어 있는 사람입니다.",
   },
 };
