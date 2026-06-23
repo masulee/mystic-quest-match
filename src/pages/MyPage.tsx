@@ -78,8 +78,12 @@ const MyPage = () => {
         <section className="bg-card/60 backdrop-blur-sm rounded-2xl border border-border/50 p-6 md:p-8">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
             <div className="relative">
-              <div className="w-16 h-16 rounded-full border-2 border-gold flex items-center justify-center bg-gradient-to-br from-gold/20 to-mystic-purple/20 text-3xl animate-pulse-glow">
-                {user.avatar ?? "🌙"}
+              <div className="w-16 h-16 rounded-full border-2 border-gold flex items-center justify-center bg-gradient-to-br from-gold/20 to-mystic-purple/20 text-3xl animate-pulse-glow overflow-hidden">
+                {user.avatar && /^https?:\/\//.test(user.avatar) ? (
+                  <img src={user.avatar} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  user.avatar ?? "🌙"
+                )}
               </div>
               <span className="absolute -bottom-1 -right-1 text-[10px] px-1.5 py-0.5 rounded-full bg-background/90 border border-border/60">
                 {providerBadge}
