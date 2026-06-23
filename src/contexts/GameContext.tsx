@@ -134,10 +134,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setState((s) => ({ ...s, isQuizActive: true, currentQuizIndex: 0, quizAnswers: [], showResponse: null, locationCompleted: false, showReward: false }));
   }, []);
 
-  const answerQuiz = useCallback((trait: PersonalityTrait, response: string) => {
+  const answerQuiz = useCallback((trait: PersonalityTrait, response: string, target: "self" | "ideal" = "self") => {
     setState((s) => ({
       ...s,
-      traitScores: { ...s.traitScores, [trait]: s.traitScores[trait] + 1 },
+      traitScores: target === "self"
+        ? { ...s.traitScores, [trait]: s.traitScores[trait] + 1 }
+        : s.traitScores,
+      idealTraitScores: target === "ideal"
+        ? { ...s.idealTraitScores, [trait]: s.idealTraitScores[trait] + 1 }
+        : s.idealTraitScores,
       quizAnswers: [...s.quizAnswers, trait],
       showResponse: response,
     }));
@@ -155,13 +160,31 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
+  const dominantOf = (scores: Record<PersonalityTrait, number>): PersonalityTrait => {
+    const entries = Object.entries(scores) as [PersonalityTrait, number][];
+    const sorted = entries.sort((a, b) => b[1] - a[1]);
+    return sorted[0]?.[1] > 0 ? sorted[0][0] : "감성";
+  };
+
   const getDominantTrait = useCallback((): PersonalityTrait => {
     const { quizAnswers } = state;
-    if (quizAnswers.length === 0) return "감성";
+    if (quizAnswers.length === 0) return dominantOf(state.traitScores);
     const counts: Record<string, number> = {};
     quizAnswers.forEach((t) => { counts[t] = (counts[t] || 0) + 1; });
     return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] as PersonalityTrait;
-  }, [state.quizAnswers]);
+  }, [state.quizAnswers, state.traitScores]);
+
+  const getDominantIdealTrait = useCallback((): PersonalityTrait => {
+    return dominantOf(state.idealTraitScores);
+  }, [state.idealTraitScores]);
+
+  const recordDoorChoice = useCallback((trait: PersonalityTrait) => {
+    setState((s) => ({
+      ...s,
+      doorChoice: trait,
+      traitScores: { ...s.traitScores, [trait]: s.traitScores[trait] + 1 },
+    }));
+  }, []);
 
   const claimReward = useCallback(() => {
     setState((s) => {
