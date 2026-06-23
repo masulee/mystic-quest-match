@@ -2,10 +2,22 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StarField } from "@/components/StarField";
+import { useGame } from "@/contexts/GameContext";
+import { doorChoices, PersonalityTrait } from "@/lib/gameData";
+import { cn } from "@/lib/utils";
 import candleImg from "@/assets/intro-candle.jpg";
 import pawnshopImg from "@/assets/intro-pawnshop.jpg";
 
-type Phase = "candle-1" | "candle-2" | "candle-3" | "pawnshop-enter" | "npc-1" | "npc-2" | "npc-quest";
+type Phase =
+  | "candle-1"
+  | "candle-2"
+  | "candle-3"
+  | "pawnshop-enter"
+  | "npc-1"
+  | "npc-2"
+  | "npc-quest"
+  | "door-intro"
+  | "door-choice";
 
 const phaseOrder: Phase[] = [
   "candle-1",
@@ -25,6 +37,8 @@ const lines: Record<Phase, string> = {
   "npc-1": "어서 오시게. 자네의 눈빛에서 무언가를 간절히 찾고 있는 듯한 기운이 느껴지는군.",
   "npc-2": "내 오랜 친구가 간직했던 '빛바랜 편지' 한 통을 찾아다 주면, 자네의 여정에 작은 도움이 될 '반쪽 아이템'을 내어주겠네.",
   "npc-quest": "",
+  "door-intro": "\"첫 번째 선택이오. 어느 문을 열든, 당신이 선택한 것이 당신을 말해줄 것입니다.\"",
+  "door-choice": "",
 };
 
 const Intro = () => {
