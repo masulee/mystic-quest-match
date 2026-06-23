@@ -294,6 +294,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         claimReward,
         selectLocation,
         getDominantTrait,
+        getDominantIdealTrait,
+        recordDoorChoice,
         resetGame,
         addMatchedPartner,
         updatePartnerTemperature,
