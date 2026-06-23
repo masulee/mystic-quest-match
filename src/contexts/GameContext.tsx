@@ -229,15 +229,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unlockedLocations: [1],
       collectedItems: [],
       traitScores: { 감성: 0, 지혜: 0, 용기: 0, 신비: 0 },
+      idealTraitScores: { 감성: 0, 지혜: 0, 용기: 0, 신비: 0 },
+      doorChoice: null,
       quizAnswers: [],
       isQuizActive: false,
       showReward: false,
       showResponse: null,
       locationCompleted: false,
-      matchedPartners: s.matchedPartners, // keep existing matches
-      matchAttempts: s.matchAttempts, // keep history
+      matchedPartners: s.matchedPartners,
+      matchAttempts: s.matchAttempts,
     }));
-    // also reset retry count
     try { localStorage.removeItem("match_retry_count"); } catch {}
   }, []);
 
