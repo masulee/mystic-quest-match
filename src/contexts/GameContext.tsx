@@ -37,6 +37,8 @@ interface GameState {
   unlockedLocations: number[];
   collectedItems: CollectedItem[];
   traitScores: Record<PersonalityTrait, number>;
+  idealTraitScores: Record<PersonalityTrait, number>;
+  doorChoice: PersonalityTrait | null;
   quizAnswers: PersonalityTrait[];
   isQuizActive: boolean;
   showReward: boolean;
@@ -48,11 +50,13 @@ interface GameState {
 
 interface GameContextType extends GameState {
   startQuiz: () => void;
-  answerQuiz: (trait: PersonalityTrait, response: string) => void;
+  answerQuiz: (trait: PersonalityTrait, response: string, target?: "self" | "ideal") => void;
   proceedAfterResponse: () => void;
   claimReward: () => void;
   selectLocation: (id: number) => void;
   getDominantTrait: () => PersonalityTrait;
+  getDominantIdealTrait: () => PersonalityTrait;
+  recordDoorChoice: (trait: PersonalityTrait) => void;
   resetGame: () => void;
   addMatchedPartner: (partner: MatchedPartner) => void;
   updatePartnerTemperature: (id: string, delta: number) => void;
