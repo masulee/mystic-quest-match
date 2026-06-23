@@ -44,8 +44,12 @@ export const Header = () => {
               onClick={() => navigate("/mypage")}
               className="flex items-center gap-2 px-2 py-1 rounded-full bg-card/70 border border-gold/30 hover:border-gold hover:shadow-[0_0_16px_hsl(38_92%_60%/0.3)] transition-all"
             >
-              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-gold/30 to-mystic-purple/30 flex items-center justify-center text-sm">
-                {user?.avatar ?? "🌙"}
+              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-gold/30 to-mystic-purple/30 flex items-center justify-center text-sm overflow-hidden">
+                {user?.avatar && /^https?:\/\//.test(user.avatar) ? (
+                  <img src={user.avatar} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  user?.avatar ?? "🌙"
+                )}
               </span>
               <span className="text-xs text-foreground/90 max-w-[90px] truncate">
                 {user?.nickname || user?.name}
