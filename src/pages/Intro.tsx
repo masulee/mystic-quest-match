@@ -170,6 +170,53 @@ const Intro = () => {
                   </Button>
                 </div>
               </div>
+            ) : phase === "door-choice" ? (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <span className="inline-block px-3 py-1 rounded-full text-[10px] tracking-[0.3em] uppercase border border-gold/40 text-gold bg-card/60">
+                    나의 성향
+                  </span>
+                  <h2 className="font-display text-xl md:text-2xl text-foreground drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]">
+                    전당포를 나서는 문.<br />당신은 어느 쪽을 엽니까?
+                  </h2>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3 text-left">
+                  {doorChoices.map((door, i) => (
+                    <button
+                      key={i}
+                      onClick={() => pickDoor(door.trait)}
+                      onMouseEnter={() => setHoveredDoor(i)}
+                      onMouseLeave={() => setHoveredDoor(null)}
+                      className={cn(
+                        "p-4 rounded-xl border transition-all duration-300 bg-card/70 backdrop-blur-sm",
+                        hoveredDoor === i
+                          ? "border-gold shadow-[0_0_24px_hsl(38_92%_60%/0.35)] -translate-y-0.5"
+                          : "border-border/50 hover:border-gold/60",
+                      )}
+                    >
+                      <p className="font-display text-base text-foreground">🚪 {door.text}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{door.hint}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : phase === "door-intro" ? (
+              <>
+                <div className="inline-block px-4 py-1 rounded-full bg-card/80 backdrop-blur-sm border border-gold/30">
+                  <span className="font-display text-sm text-gold tracking-widest">
+                    전당포 주인
+                  </span>
+                </div>
+                <p className="font-display text-xl md:text-3xl text-foreground leading-relaxed drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]">
+                  {lines[phase]}
+                </p>
+                <button
+                  onClick={() => { setPhase("door-choice"); setTextKey((k) => k + 1); }}
+                  className="text-xs text-gold/70 hover:text-gold transition-colors tracking-[0.3em] uppercase animate-pulse"
+                >
+                  ▾ 문 앞에 서기 ▾
+                </button>
+              </>
             ) : (
               <>
                 <p className="font-display text-xl md:text-3xl text-foreground leading-relaxed drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]">
