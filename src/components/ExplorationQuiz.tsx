@@ -88,18 +88,29 @@ export const ExplorationQuiz = () => {
   // Location intro
   if (!isQuizActive && !locationCompleted) {
     return (
-      <div className="text-center space-y-8 py-8 animate-in fade-in duration-500">
-        <div className="relative inline-block">
-          <span className="text-6xl">{location.icon}</span>
-          <div className="absolute -inset-6 rounded-full bg-gold/10 blur-2xl" />
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="relative h-56 md:h-72 -mx-6 md:-mx-8 -mt-6 md:-mt-8 overflow-hidden rounded-t-2xl">
+          <img
+            src={location.sceneImage}
+            alt={location.name}
+            width={1280}
+            height={768}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background" />
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-5xl drop-shadow-[0_0_20px_rgba(250,204,21,0.6)]">
+            {location.icon}
+          </div>
         </div>
-        <div className="space-y-3">
+        <div className="text-center space-y-3">
           <h3 className="font-display text-2xl text-gradient-gold">{location.name}</h3>
           <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">{location.description}</p>
         </div>
-        <Button variant="golden" size="lg" onClick={startQuiz}>
-          🌙 탐험 시작하기
-        </Button>
+        <div className="flex justify-center">
+          <Button variant="golden" size="lg" onClick={startQuiz}>
+            🌙 탐험 시작하기
+          </Button>
+        </div>
       </div>
     );
   }
