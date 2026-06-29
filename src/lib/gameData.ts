@@ -1,3 +1,9 @@
+import libraryScene from "@/assets/scenes/library-of-mists.jpg";
+import lakeScene from "@/assets/scenes/moonlight-lake.jpg";
+import towerScene from "@/assets/scenes/tower-of-storms.jpg";
+import marketScene from "@/assets/scenes/red-market.jpg";
+import gardenScene from "@/assets/scenes/garden-of-silence.jpg";
+
 export type PersonalityTrait = "감성" | "지혜" | "용기" | "신비";
 
 export type QuizTarget = "self" | "ideal";
