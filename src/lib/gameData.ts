@@ -1,3 +1,9 @@
+import libraryScene from "@/assets/scenes/library-of-mists.jpg";
+import lakeScene from "@/assets/scenes/moonlight-lake.jpg";
+import towerScene from "@/assets/scenes/tower-of-storms.jpg";
+import marketScene from "@/assets/scenes/red-market.jpg";
+import gardenScene from "@/assets/scenes/garden-of-silence.jpg";
+
 export type PersonalityTrait = "감성" | "지혜" | "용기" | "신비";
 
 export type QuizTarget = "self" | "ideal";
@@ -28,6 +34,7 @@ export interface GameLocation {
   icon: string;
   description: string;
   backgroundEmoji: string;
+  sceneImage: string;
   quizzes: Quiz[];
   rewards: LocationReward[];
 }
@@ -68,6 +75,7 @@ export const gameLocations: GameLocation[] = [
     icon: "📚",
     description: "기억이 책이 되는 곳. 끝없이 이어진 서가에는 제목 없는 책들이 놓여 있고, 안개가 낮게 깔려 있습니다.",
     backgroundEmoji: "🌫️",
+    sceneImage: libraryScene,
     quizzes: [
       {
         target: "ideal",
@@ -103,6 +111,7 @@ export const gameLocations: GameLocation[] = [
     icon: "🌙",
     description: "반영만이 진실을 말하는 곳. 달이 수면 가득 비치고, 발밑의 물은 파문 없이 고요합니다.",
     backgroundEmoji: "🌊",
+    sceneImage: lakeScene,
     quizzes: [
       {
         target: "ideal",
@@ -138,6 +147,7 @@ export const gameLocations: GameLocation[] = [
     icon: "🗼",
     description: "가장 높은 곳이 가장 위험한 곳. 올라갈수록 바람이 거세지고, 꼭대기에서는 폭풍이 몰아칩니다.",
     backgroundEmoji: "⛈️",
+    sceneImage: towerScene,
     quizzes: [
       {
         target: "ideal",
@@ -173,6 +183,7 @@ export const gameLocations: GameLocation[] = [
     icon: "🏮",
     description: "이름 없는 것들이 거래되는 곳. 여기서 거래되는 것은 물건이 아닙니다 — 가장 진귀한 물건은 기억으로만 살 수 있습니다.",
     backgroundEmoji: "🔥",
+    sceneImage: marketScene,
     quizzes: [
       {
         target: "self",
@@ -208,6 +219,7 @@ export const gameLocations: GameLocation[] = [
     icon: "🌿",
     description: "말하지 않아도 들리는 곳. 정원 한가운데 의자 두 개가 놓여 있고, 당신이 먼저 앉아 기다립니다.",
     backgroundEmoji: "🌸",
+    sceneImage: gardenScene,
     quizzes: [
       {
         target: "ideal",

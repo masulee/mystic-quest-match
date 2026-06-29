@@ -88,18 +88,29 @@ export const ExplorationQuiz = () => {
   // Location intro
   if (!isQuizActive && !locationCompleted) {
     return (
-      <div className="text-center space-y-8 py-8 animate-in fade-in duration-500">
-        <div className="relative inline-block">
-          <span className="text-6xl">{location.icon}</span>
-          <div className="absolute -inset-6 rounded-full bg-gold/10 blur-2xl" />
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="relative h-56 md:h-72 -mx-6 md:-mx-8 -mt-6 md:-mt-8 overflow-hidden rounded-t-2xl">
+          <img
+            src={location.sceneImage}
+            alt={location.name}
+            width={1280}
+            height={768}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background" />
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-5xl drop-shadow-[0_0_20px_rgba(250,204,21,0.6)]">
+            {location.icon}
+          </div>
         </div>
-        <div className="space-y-3">
+        <div className="text-center space-y-3">
           <h3 className="font-display text-2xl text-gradient-gold">{location.name}</h3>
           <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">{location.description}</p>
         </div>
-        <Button variant="golden" size="lg" onClick={startQuiz}>
-          🌙 탐험 시작하기
-        </Button>
+        <div className="flex justify-center">
+          <Button variant="golden" size="lg" onClick={startQuiz}>
+            🌙 탐험 시작하기
+          </Button>
+        </div>
       </div>
     );
   }
@@ -107,14 +118,29 @@ export const ExplorationQuiz = () => {
   // Show response after answering
   if (showResponse) {
     return (
-      <div className="text-center space-y-8 py-8 animate-in fade-in duration-500">
-        <div className="text-4xl animate-pulse-glow rounded-full inline-block p-4">{location.icon}</div>
-        <p className="text-foreground/90 text-lg leading-relaxed max-w-md mx-auto italic">
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="relative h-44 md:h-56 -mx-6 md:-mx-8 -mt-6 md:-mt-8 overflow-hidden rounded-t-2xl">
+          <img
+            src={location.sceneImage}
+            alt={location.name}
+            width={1280}
+            height={768}
+            loading="lazy"
+            className="w-full h-full object-cover scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/10 to-background" />
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-4xl animate-pulse-glow rounded-full p-3">
+            {location.icon}
+          </div>
+        </div>
+        <p className="text-center text-foreground/90 text-lg leading-relaxed max-w-md mx-auto italic px-4">
           {showResponse}
         </p>
-        <Button variant="ethereal" onClick={() => { setSelectedChoice(null); proceedAfterResponse(); }}>
-          계속하기 →
-        </Button>
+        <div className="flex justify-center">
+          <Button variant="ethereal" onClick={() => { setSelectedChoice(null); proceedAfterResponse(); }}>
+            계속하기 →
+          </Button>
+        </div>
       </div>
     );
   }
@@ -141,15 +167,24 @@ export const ExplorationQuiz = () => {
   const targetColor = quiz.target === "self" ? "text-gold" : "text-mystic-purple";
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">
-          {location.name} • 질문 {currentQuizIndex + 1}/{location.quizzes.length}
-        </span>
-        <div className="flex gap-1">
-          {location.quizzes.map((_, i) => (
-            <div key={i} className={cn("w-2 h-2 rounded-full", i <= currentQuizIndex ? "bg-gold" : "bg-muted")} />
-          ))}
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="relative h-32 md:h-40 -mx-6 md:-mx-8 -mt-6 md:-mt-8 overflow-hidden rounded-t-2xl">
+        <img
+          src={location.sceneImage}
+          alt={location.name}
+          width={1280}
+          height={768}
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background" />
+        <div className="absolute inset-0 flex items-end justify-between px-4 pb-3">
+          <span className="text-xs text-foreground/90 font-display drop-shadow">
+            {location.icon} {location.name}
+          </span>
+          <span className="text-[10px] text-foreground/80 drop-shadow">
+            질문 {currentQuizIndex + 1}/{location.quizzes.length}
+          </span>
         </div>
       </div>
 
@@ -159,6 +194,7 @@ export const ExplorationQuiz = () => {
         </span>
         <p className="text-foreground text-lg leading-relaxed">{quiz.question}</p>
       </div>
+
 
       <div className="grid gap-3">
         {quiz.choices.map((choice, index) => (
