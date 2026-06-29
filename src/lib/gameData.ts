@@ -34,6 +34,7 @@ export interface GameLocation {
   icon: string;
   description: string;
   backgroundEmoji: string;
+  sceneImage: string;
   quizzes: Quiz[];
   rewards: LocationReward[];
 }
