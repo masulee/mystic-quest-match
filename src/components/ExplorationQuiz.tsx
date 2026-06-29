@@ -118,14 +118,29 @@ export const ExplorationQuiz = () => {
   // Show response after answering
   if (showResponse) {
     return (
-      <div className="text-center space-y-8 py-8 animate-in fade-in duration-500">
-        <div className="text-4xl animate-pulse-glow rounded-full inline-block p-4">{location.icon}</div>
-        <p className="text-foreground/90 text-lg leading-relaxed max-w-md mx-auto italic">
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="relative h-44 md:h-56 -mx-6 md:-mx-8 -mt-6 md:-mt-8 overflow-hidden rounded-t-2xl">
+          <img
+            src={location.sceneImage}
+            alt={location.name}
+            width={1280}
+            height={768}
+            loading="lazy"
+            className="w-full h-full object-cover scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/10 to-background" />
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-4xl animate-pulse-glow rounded-full p-3">
+            {location.icon}
+          </div>
+        </div>
+        <p className="text-center text-foreground/90 text-lg leading-relaxed max-w-md mx-auto italic px-4">
           {showResponse}
         </p>
-        <Button variant="ethereal" onClick={() => { setSelectedChoice(null); proceedAfterResponse(); }}>
-          계속하기 →
-        </Button>
+        <div className="flex justify-center">
+          <Button variant="ethereal" onClick={() => { setSelectedChoice(null); proceedAfterResponse(); }}>
+            계속하기 →
+          </Button>
+        </div>
       </div>
     );
   }
