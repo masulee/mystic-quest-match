@@ -152,15 +152,24 @@ export const ExplorationQuiz = () => {
   const targetColor = quiz.target === "self" ? "text-gold" : "text-mystic-purple";
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">
-          {location.name} • 질문 {currentQuizIndex + 1}/{location.quizzes.length}
-        </span>
-        <div className="flex gap-1">
-          {location.quizzes.map((_, i) => (
-            <div key={i} className={cn("w-2 h-2 rounded-full", i <= currentQuizIndex ? "bg-gold" : "bg-muted")} />
-          ))}
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="relative h-32 md:h-40 -mx-6 md:-mx-8 -mt-6 md:-mt-8 overflow-hidden rounded-t-2xl">
+        <img
+          src={location.sceneImage}
+          alt={location.name}
+          width={1280}
+          height={768}
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background" />
+        <div className="absolute inset-0 flex items-end justify-between px-4 pb-3">
+          <span className="text-xs text-foreground/90 font-display drop-shadow">
+            {location.icon} {location.name}
+          </span>
+          <span className="text-[10px] text-foreground/80 drop-shadow">
+            질문 {currentQuizIndex + 1}/{location.quizzes.length}
+          </span>
         </div>
       </div>
 
@@ -170,6 +179,7 @@ export const ExplorationQuiz = () => {
         </span>
         <p className="text-foreground text-lg leading-relaxed">{quiz.question}</p>
       </div>
+
 
       <div className="grid gap-3">
         {quiz.choices.map((choice, index) => (
