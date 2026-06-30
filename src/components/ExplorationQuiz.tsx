@@ -115,28 +115,28 @@ export const ExplorationQuiz = () => {
     );
   }
 
-  // Show response after answering
+  // Show response after answering - immersive
   if (showResponse) {
     return (
-      <div className="space-y-8 animate-in fade-in duration-500">
-        <div className="relative h-44 md:h-56 -mx-6 md:-mx-8 -mt-6 md:-mt-8 overflow-hidden rounded-t-2xl">
+      <div className="relative -mx-6 md:-mx-8 -my-6 md:-my-8 rounded-2xl overflow-hidden animate-in fade-in duration-500">
+        <div className="absolute inset-0">
           <img
             src={location.sceneImage}
             alt={location.name}
             width={1280}
             height={768}
             loading="lazy"
-            className="w-full h-full object-cover scale-105"
+            className="w-full h-full object-cover scale-110 animate-pulse-glow"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/10 to-background" />
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-4xl animate-pulse-glow rounded-full p-3">
+          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background/90 backdrop-blur-[3px]" />
+        </div>
+        <div className="relative z-10 px-6 md:px-8 py-12 min-h-[480px] flex flex-col items-center justify-center gap-8">
+          <div className="text-5xl animate-float drop-shadow-[0_0_20px_rgba(250,204,21,0.6)]">
             {location.icon}
           </div>
-        </div>
-        <p className="text-center text-foreground/90 text-lg leading-relaxed max-w-md mx-auto italic px-4">
-          {showResponse}
-        </p>
-        <div className="flex justify-center">
+          <p className="text-center text-foreground text-lg md:text-xl leading-relaxed max-w-md mx-auto italic px-4 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+            {showResponse}
+          </p>
           <Button variant="ethereal" onClick={() => { setSelectedChoice(null); proceedAfterResponse(); }}>
             계속하기 →
           </Button>
@@ -144,6 +144,7 @@ export const ExplorationQuiz = () => {
       </div>
     );
   }
+
 
   // Quiz completed, claim reward
   if (locationCompleted && !showReward) {
@@ -164,70 +165,78 @@ export const ExplorationQuiz = () => {
   if (!quiz) return null;
 
   const targetLabel = quiz.target === "self" ? "나의 성향" : "이상형 탐색";
-  const targetColor = quiz.target === "self" ? "text-gold" : "text-mystic-purple";
+  const targetColor = quiz.target === "self" ? "text-gold border-gold/40" : "text-mystic-purple border-mystic-purple/40";
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="relative h-32 md:h-40 -mx-6 md:-mx-8 -mt-6 md:-mt-8 overflow-hidden rounded-t-2xl">
+    <div className="relative -mx-6 md:-mx-8 -my-6 md:-my-8 rounded-2xl overflow-hidden animate-in fade-in duration-500">
+      {/* Immersive scene background */}
+      <div className="absolute inset-0">
         <img
           src={location.sceneImage}
           alt={location.name}
           width={1280}
           height={768}
-          loading="lazy"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background" />
-        <div className="absolute inset-0 flex items-end justify-between px-4 pb-3">
-          <span className="text-xs text-foreground/90 font-display drop-shadow">
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/65 to-background/95 backdrop-blur-[2px]" />
+      </div>
+
+      <div className="relative z-10 px-6 md:px-8 py-6 md:py-8 min-h-[600px] flex flex-col">
+        {/* Location header */}
+        <div className="flex items-center justify-between mb-8">
+          <span className="text-xs text-foreground/95 font-display drop-shadow-lg">
             {location.icon} {location.name}
           </span>
-          <span className="text-[10px] text-foreground/80 drop-shadow">
+          <span className="text-[10px] text-foreground/80 drop-shadow-lg tracking-wider">
             질문 {currentQuizIndex + 1}/{location.quizzes.length}
           </span>
         </div>
-      </div>
 
-      <div className="text-center space-y-3 py-2">
-        <span className={cn("inline-block px-3 py-1 rounded-full text-[10px] tracking-[0.2em] uppercase border border-border/50 bg-card/40", targetColor)}>
-          {targetLabel}
-        </span>
-        <p className="text-foreground text-lg leading-relaxed">{quiz.question}</p>
-      </div>
-
-
-      <div className="grid gap-3">
-        {quiz.choices.map((choice, index) => (
-          <button
-            key={index}
-            onClick={() => setSelectedChoice(index)}
-            className={cn(
-              "w-full text-left p-4 rounded-xl border transition-all duration-300",
-              selectedChoice === index
-                ? "border-gold bg-gold/10 shadow-[0_0_20px_hsl(38_92%_60%/0.2)]"
-                : "border-border/50 bg-card/30 hover:border-gold/50 hover:bg-card/50"
-            )}
-          >
-            <span className="text-sm text-foreground/90">{choice.text}</span>
-          </button>
-        ))}
-      </div>
-
-      {selectedChoice !== null && (
-        <div className="flex justify-center animate-in fade-in duration-300">
-          <Button
-            variant="mystic"
-            size="lg"
-            onClick={() => {
-              const choice = quiz.choices[selectedChoice];
-              answerQuiz(choice.trait, choice.response, quiz.target);
-              setSelectedChoice(null);
-            }}
-          >
-            선택하기
-          </Button>
+        {/* Question */}
+        <div className="text-center space-y-4 mb-8">
+          <span className={cn("inline-block px-3 py-1 rounded-full text-[10px] tracking-[0.2em] uppercase border bg-background/50 backdrop-blur-md", targetColor)}>
+            {targetLabel}
+          </span>
+          <p className="text-foreground text-lg md:text-xl leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] max-w-md mx-auto">
+            {quiz.question}
+          </p>
         </div>
-      )}
+
+        {/* Choices anchored to bottom */}
+        <div className="grid gap-3 mt-auto">
+          {quiz.choices.map((choice, index) => (
+            <button
+              key={index}
+              onClick={() => setSelectedChoice(index)}
+              className={cn(
+                "w-full text-left p-4 rounded-xl border backdrop-blur-md transition-all duration-300",
+                selectedChoice === index
+                  ? "border-gold bg-gold/20 shadow-[0_0_24px_hsl(38_92%_60%/0.4)]"
+                  : "border-border/60 bg-background/55 hover:border-gold/60 hover:bg-background/75"
+              )}
+            >
+              <span className="text-sm text-foreground/95">{choice.text}</span>
+            </button>
+          ))}
+        </div>
+
+        {selectedChoice !== null && (
+          <div className="flex justify-center mt-6 animate-in fade-in duration-300">
+            <Button
+              variant="mystic"
+              size="lg"
+              onClick={() => {
+                const choice = quiz.choices[selectedChoice];
+                answerQuiz(choice.trait, choice.response, quiz.target);
+                setSelectedChoice(null);
+              }}
+            >
+              선택하기
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+
