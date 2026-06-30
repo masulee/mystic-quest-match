@@ -115,28 +115,28 @@ export const ExplorationQuiz = () => {
     );
   }
 
-  // Show response after answering
+  // Show response after answering - immersive
   if (showResponse) {
     return (
-      <div className="space-y-8 animate-in fade-in duration-500">
-        <div className="relative h-44 md:h-56 -mx-6 md:-mx-8 -mt-6 md:-mt-8 overflow-hidden rounded-t-2xl">
+      <div className="relative -mx-6 md:-mx-8 -my-6 md:-my-8 rounded-2xl overflow-hidden animate-in fade-in duration-500">
+        <div className="absolute inset-0">
           <img
             src={location.sceneImage}
             alt={location.name}
             width={1280}
             height={768}
             loading="lazy"
-            className="w-full h-full object-cover scale-105"
+            className="w-full h-full object-cover scale-110 animate-pulse-glow"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/10 to-background" />
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-4xl animate-pulse-glow rounded-full p-3">
+          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background/90 backdrop-blur-[3px]" />
+        </div>
+        <div className="relative z-10 px-6 md:px-8 py-12 min-h-[480px] flex flex-col items-center justify-center gap-8">
+          <div className="text-5xl animate-float drop-shadow-[0_0_20px_rgba(250,204,21,0.6)]">
             {location.icon}
           </div>
-        </div>
-        <p className="text-center text-foreground/90 text-lg leading-relaxed max-w-md mx-auto italic px-4">
-          {showResponse}
-        </p>
-        <div className="flex justify-center">
+          <p className="text-center text-foreground text-lg md:text-xl leading-relaxed max-w-md mx-auto italic px-4 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+            {showResponse}
+          </p>
           <Button variant="ethereal" onClick={() => { setSelectedChoice(null); proceedAfterResponse(); }}>
             계속하기 →
           </Button>
@@ -144,6 +144,7 @@ export const ExplorationQuiz = () => {
       </div>
     );
   }
+
 
   // Quiz completed, claim reward
   if (locationCompleted && !showReward) {
