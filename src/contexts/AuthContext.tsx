@@ -14,6 +14,7 @@ export interface User {
   gender?: "male" | "female" | "other";
   age?: number;
   birthdate?: string; // ISO date string YYYY-MM-DD
+  snsUrl?: string;
   profileCompleted?: boolean;
 }
 
@@ -23,7 +24,7 @@ interface AuthContextType {
   loading: boolean;
   loginWithOAuth: (provider: "google") => Promise<void>;
   logout: () => Promise<void>;
-  updateProfile: (data: { nickname: string; gender: User["gender"]; birthdate: string }) => Promise<void>;
+  updateProfile: (data: { nickname: string; gender: User["gender"]; birthdate: string; snsUrl?: string }) => Promise<void>;
 }
 
 export const calcAge = (birthdate?: string): number | undefined => {
@@ -53,7 +54,7 @@ const buildUserFromSupabase = async (sUser: {
 }): Promise<User> => {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("nickname, gender, birthdate, age, avatar_url, profile_completed, provider")
+    .select("nickname, gender, birthdate, age, avatar_url, profile_completed, provider, sns_url")
     .eq("id", sUser.id)
     .maybeSingle();
 
@@ -75,6 +76,7 @@ const buildUserFromSupabase = async (sUser: {
     gender: (profile?.gender as User["gender"]) ?? undefined,
     age: profile?.age ?? undefined,
     birthdate: profile?.birthdate ?? undefined,
+    snsUrl: (profile as any)?.sns_url ?? undefined,
     profileCompleted: profile?.profile_completed ?? false,
   };
 };
@@ -122,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const updateProfile = useCallback(
-    async (data: { nickname: string; gender: User["gender"]; birthdate: string }) => {
+    async (data: { nickname: string; gender: User["gender"]; birthdate: string; snsUrl?: string }) => {
       if (!user) return;
       const age = calcAge(data.birthdate);
       const { error } = await supabase
@@ -132,8 +134,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           gender: data.gender as any,
           birthdate: data.birthdate,
           age,
+          sns_url: data.snsUrl ?? null,
           profile_completed: true,
-        })
+        } as any)
         .eq("id", user.id);
       if (error) throw error;
       setUser({ ...user, ...data, age, profileCompleted: true });
