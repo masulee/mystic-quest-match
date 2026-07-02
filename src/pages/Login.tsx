@@ -72,6 +72,7 @@ const Login = () => {
   const [birthInput, setBirthInput] = useState<string>(
     user?.birthdate ? user.birthdate.replace(/-/g, "") : ""
   );
+  const [snsUrl, setSnsUrl] = useState<string>(user?.snsUrl ?? "");
 
   const parseBirth = (digits: string): string | null => {
     if (!/^\d{8}$/.test(digits)) return null;
@@ -124,11 +125,17 @@ const Login = () => {
       toast.error("올바른 생년월일 8자리를 입력해주세요 (YYYYMMDD)");
       return;
     }
+    const trimmedSns = snsUrl.trim();
+    if (trimmedSns && trimmedSns.length > 200) {
+      toast.error("SNS 주소는 200자 이하로 입력해주세요");
+      return;
+    }
     try {
       await updateProfile({
         nickname: trimmed,
         gender: gender as "male" | "female" | "other",
         birthdate: iso,
+        snsUrl: trimmedSns || undefined,
       });
       toast.success(`환영합니다, ${trimmed}님 ✨`);
       navigate(from, { replace: true });
