@@ -368,8 +368,7 @@ const Login = () => {
                   </p>
                 </div>
               </div>
-
-
+              <Button variant="golden" size="lg" className="w-full" onClick={handleSubmitProfile}>
                 ✨ 가입 완료
               </Button>
             </div>
