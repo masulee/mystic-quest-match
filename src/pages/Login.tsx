@@ -346,7 +346,30 @@ const Login = () => {
                 </p>
               </div>
 
-              <Button variant="golden" size="lg" className="w-full" onClick={handleSubmitProfile}>
+              <div className="space-y-2">
+                <label className="text-sm text-foreground/80 flex items-center gap-2">
+                  SNS 주소 <span className="text-[10px] text-muted-foreground">(선택)</span>
+                </label>
+                <Input
+                  type="url"
+                  inputMode="url"
+                  placeholder="예: https://instagram.com/your_id"
+                  maxLength={200}
+                  value={snsUrl}
+                  onChange={(e) => setSnsUrl(e.target.value)}
+                />
+                <div className="rounded-lg border border-mystic-purple/40 bg-mystic-purple/10 px-3 py-2">
+                  <p className="text-[11px] leading-relaxed text-foreground/90">
+                    ✨ <span className="text-gold font-medium">SNS 주소를 입력하면 매칭 성공률이 높아져요.</span>
+                    <br />
+                    <span className="text-muted-foreground">
+                      당신의 취향과 분위기를 읽어 더 잘 맞는 인연을 찾아드릴게요.
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+
                 ✨ 가입 완료
               </Button>
             </div>
