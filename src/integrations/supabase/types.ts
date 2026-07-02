@@ -214,6 +214,7 @@ export type Database = {
           nickname: string | null
           profile_completed: boolean
           provider: Database["public"]["Enums"]["auth_provider"] | null
+          sns_url: string | null
           updated_at: string
         }
         Insert: {
@@ -227,6 +228,7 @@ export type Database = {
           nickname?: string | null
           profile_completed?: boolean
           provider?: Database["public"]["Enums"]["auth_provider"] | null
+          sns_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -240,6 +242,7 @@ export type Database = {
           nickname?: string | null
           profile_completed?: boolean
           provider?: Database["public"]["Enums"]["auth_provider"] | null
+          sns_url?: string | null
           updated_at?: string
         }
         Relationships: []

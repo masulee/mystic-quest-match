@@ -72,6 +72,7 @@ const Login = () => {
   const [birthInput, setBirthInput] = useState<string>(
     user?.birthdate ? user.birthdate.replace(/-/g, "") : ""
   );
+  const [snsUrl, setSnsUrl] = useState<string>(user?.snsUrl ?? "");
 
   const parseBirth = (digits: string): string | null => {
     if (!/^\d{8}$/.test(digits)) return null;
@@ -124,11 +125,17 @@ const Login = () => {
       toast.error("올바른 생년월일 8자리를 입력해주세요 (YYYYMMDD)");
       return;
     }
+    const trimmedSns = snsUrl.trim();
+    if (trimmedSns && trimmedSns.length > 200) {
+      toast.error("SNS 주소는 200자 이하로 입력해주세요");
+      return;
+    }
     try {
       await updateProfile({
         nickname: trimmed,
         gender: gender as "male" | "female" | "other",
         birthdate: iso,
+        snsUrl: trimmedSns || undefined,
       });
       toast.success(`환영합니다, ${trimmed}님 ✨`);
       navigate(from, { replace: true });
@@ -339,6 +346,28 @@ const Login = () => {
                 </p>
               </div>
 
+              <div className="space-y-2">
+                <label className="text-sm text-foreground/80 flex items-center gap-2">
+                  SNS 주소 <span className="text-[10px] text-muted-foreground">(선택)</span>
+                </label>
+                <Input
+                  type="url"
+                  inputMode="url"
+                  placeholder="예: https://instagram.com/your_id"
+                  maxLength={200}
+                  value={snsUrl}
+                  onChange={(e) => setSnsUrl(e.target.value)}
+                />
+                <div className="rounded-lg border border-mystic-purple/40 bg-mystic-purple/10 px-3 py-2">
+                  <p className="text-[11px] leading-relaxed text-foreground/90">
+                    ✨ <span className="text-gold font-medium">SNS 주소를 입력하면 매칭 성공률이 높아져요.</span>
+                    <br />
+                    <span className="text-muted-foreground">
+                      당신의 취향과 분위기를 읽어 더 잘 맞는 인연을 찾아드릴게요.
+                    </span>
+                  </p>
+                </div>
+              </div>
               <Button variant="golden" size="lg" className="w-full" onClick={handleSubmitProfile}>
                 ✨ 가입 완료
               </Button>
